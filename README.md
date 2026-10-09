@@ -10,7 +10,7 @@
 > Hiss, hum and harsh highs out. Streaming-ready loudness in.
 
 <p>
-  <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-8b5cf6?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
 </p>
 
 Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/wavmasta) if it saves you time.
@@ -49,6 +49,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
 - 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** gives an album one sound
 - ✅ **Always know where you stand**: each song shows when it's saved, and says *changed · master again* if you tweak it afterwards
+- 🧭 **Clean navigation**: tabs across the top and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
 ---
@@ -89,7 +90,7 @@ python -m wavmasta
 
 ## ⚙️ How It Works
 
-Everything happens on the **Master** page, top to bottom:
+Everything happens on the **Master** tab, top to bottom:
 
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
@@ -97,9 +98,9 @@ Everything happens on the **Master** page, top to bottom:
 4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-**History** lists everything Check, Before/After and Master did; double-click a saved song to open its folder.
+The **History** tab lists everything Check, Before/After and Master did; double-click a saved song to open its folder.
 
-**Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
+The **Settings** tab holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
 ### The chain
 
@@ -124,7 +125,7 @@ Everything happens on the **Master** page, top to bottom:
 | `Ctrl+P` | Hear after |
 | `Esc` | Stop playback |
 | `Ctrl+Enter` | Master |
-| `Ctrl+1` to `Ctrl+4` | Master, History, Settings, Help pages |
+| `Ctrl+1` to `Ctrl+4` | Master, History, Settings, Help tabs |
 | `F1` | Help |
 
 ---
@@ -168,14 +169,118 @@ wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
 
 ---
 
+## 🩺 Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
+| The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, and lower **Glue** to 20-30%. |
+| Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
+| The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
+| A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
+| **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |
+| Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** tab and master again. |
+| My song sounds quieter than others on Spotify | That's normalisation: Spotify plays everything at about the same loudness. A -14 LUFS master loses nothing. |
+| No sound when pressing Before or After | Check your output device and volume. If it can't play, the status card shows where the preview file was saved. |
+
+Still stuck? [Open an issue](https://github.com/skynrlabs/WavMasta/issues) with your settings and, if you can share it, a short clip of the song.
+
+---
+
+## 📂 Project Structure
+
+```
+wavmasta/
+├── __main__.py          Entry point: `python -m wavmasta`
+├── cli.py               Command-line options
+├── config.py            Tone presets, loudness targets, formats, saved settings
+├── core/                The audio engine (no GUI code, usable from scripts)
+│   ├── pipeline.py      One song: load → clean up → master → save
+│   ├── analysis.py      Loudness (BS.1770), true peak, hiss, hum/whine and harsh-highs detection
+│   ├── cleanup.py       De-hisser, hum and whine notches, harsh-highs shelf
+│   ├── chain.py         Tone EQ, reference matching, width, glue, loudness and limiter
+│   ├── audio.py         Reading and writing WAV, FLAC, MP3 (with dither for 16-bit)
+│   └── preview.py       Level-matched before/after clips and playback
+└── gui/                 The window
+    ├── app.py           Main window and shared plumbing
+    ├── journeys.py      Check, Before/After and Master workflows
+    ├── pages/           Master, History, Settings and Help tabs
+    ├── model.py         Each song's own sound settings and status
+    ├── tracks_table.py  The songs list: a row per song with Before, After and status
+    ├── sound_card.py    The selected song's sound card
+    ├── topbar.py        Top bar with the tabs
+    ├── status_card.py   The large status message above the buttons
+    ├── action_bar.py    Save location, Open folder and Master
+    ├── activity.py      The History table
+    ├── shortcuts.py     Keyboard shortcuts
+    ├── dialogs.py       About dialog
+    ├── widgets.py       Shared building blocks
+    └── theme.py         Colours, fonts and styles
+wavmasta/assets/         App icon (SVG source, PNGs and Windows .ico)
+tests/                   Tests with synthetic songs (pytest), incl. window tests
+packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
+.github/workflows/       Lint and tests on Linux
+docs/                    README screenshot
+```
+
+The engine can be used from your own scripts:
+
+```python
+from wavmasta.core import Settings, analyze, load, master_file
+
+audio, sr = load("My Song.wav")
+print(analyze(audio, sr).findings())
+
+master_file("My Song.wav", Settings(tone="Country", denoise=40, target_lufs=-14))
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| | |
+|---|---|
+| Language | Python 3.10+ |
+| UI | Tkinter |
+| Audio processing | pedalboard (Spotify), NumPy, SciPy |
+| Loudness metering | Built-in ITU-R BS.1770-4 meter (checked against pyloudnorm in the tests) |
+| Windows app | PyInstaller + Inno Setup |
+
+---
+
+## 🔐 Privacy
+
+WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. Besides your masters, the only file it writes is a small `settings.json` that remembers your format, peak ceiling and whether to open the folder when done, stored in `%APPDATA%\WavMasta` on Windows, `~/Library/Application Support/WavMasta` on macOS or `~/.config/wavmasta` on Linux. Before/After previews go in your system temp folder.
+
+---
+
+## 💜 Support WavMasta
+
+WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other musicians helps too.
+
+---
+
 ## 🤝 Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the branch model, coding standards and how to run the tests.
+PRs and issues are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, including how releases are published.
+
+The repo uses a two-branch model:
+
+| Branch | Purpose |
+|---|---|
+| `main` | Stable, release-ready |
+| `dev` | Integration target — all PRs merge here first |
 
 ## 🔒 Security
 
-See [SECURITY.md](SECURITY.md). WavMasta runs entirely on your computer and never uploads audio.
+See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 
 ## 📄 License
 
-[MIT](LICENSE) © 2026 Skynr Labs
+WavMasta is open-source software licensed under the **MIT License**. Copyright © 2026 Skynr Labs.
+
+You are free to use, modify, and distribute this software, including in commercial projects, as long as the copyright notice is kept. See [LICENSE](LICENSE) for full terms.
+
+---
+
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/wavmasta) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)

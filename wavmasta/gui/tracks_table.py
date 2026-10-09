@@ -7,7 +7,7 @@ from .theme import THEME as T
 
 ROW_HEIGHT = 38
 VISIBLE_ROWS = 4
-STATUS_COLORS = {"muted": "muted", "busy": "accent", "ok": "ok", "warn": "warn"}
+STATUS_COLORS = {"muted": "muted", "busy": "accent_soft", "ok": "ok", "warn": "warn"}
 # Pixel widths shared by the heading and every row so the columns line up: Before, After, Song, Status, Remove
 COLUMNS = [("Hear", 70), ("", 70), ("Song", 280), ("Status", 0), ("", 96)]
 NAME_CHARS = 34
@@ -26,7 +26,7 @@ class TracksTable(ttk.Frame):
     """Rows are rebuilt when songs are added or removed; selection and status update in place."""
 
     def __init__(self, parent, fonts, on_select, on_play, on_remove):
-        super().__init__(parent, style="Card.TFrame")
+        super().__init__(parent, style="Inner.TFrame")
         self.F = fonts
         self.on_select, self.on_play, self.on_remove = on_select, on_play, on_remove
         self.rows = []
@@ -39,7 +39,7 @@ class TracksTable(ttk.Frame):
         head.grid(row=0, column=0, sticky="ew", pady=(0, 4))
         _columns(head)
         for i, (text, _) in enumerate(COLUMNS):
-            tk.Label(head, text=text, bg=T["card"], fg=T["muted"], font=fonts["small"], anchor="w").grid(
+            tk.Label(head, text=text, bg=T["card"], fg=T["accent_soft"], font=fonts["small"], anchor="w").grid(
                 row=0, column=i, sticky="w", padx=(6, 0) if i == 0 else 0
             )
 

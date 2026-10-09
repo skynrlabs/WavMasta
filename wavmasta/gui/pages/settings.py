@@ -46,7 +46,7 @@ class SettingsPage(ttk.Frame):
     def _build_output(self):
         c = card(self, 0, "Save masters to")
         ttk.Label(c, textvariable=self.out_text, style="Card.TLabel").grid(row=1, column=0, columnspan=2, sticky="w")
-        btns = ttk.Frame(c, style="Card.TFrame")
+        btns = ttk.Frame(c, style="Inner.TFrame")
         btns.grid(row=1, column=2, sticky="e")
         ttk.Button(btns, text="Change...", command=self.pick_folder).pack(side="left")
         ttk.Button(btns, text="Reset", command=self.reset_folder).pack(side="left", padx=(6, 0))
@@ -56,7 +56,7 @@ class SettingsPage(ttk.Frame):
             "Your original is never changed.",
             style="Muted.TLabel",
         ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(10, 0))
-        row = ttk.Frame(c, style="Card.TFrame")
+        row = ttk.Frame(c, style="Inner.TFrame")
         row.grid(row=3, column=0, columnspan=3, sticky="w", pady=(12, 0))
         ttk.Label(row, text="Format", style="Card.TLabel").pack(side="left", padx=(0, 16))
         box = ttk.Combobox(row, textvariable=self.format_var, values=list(FORMATS), state="readonly", width=18)
@@ -69,7 +69,7 @@ class SettingsPage(ttk.Frame):
 
     def _build_ceiling(self):
         c = card(self, 1, "Peak ceiling", "the same for every song")
-        row = ttk.Frame(c, style="Card.TFrame")
+        row = ttk.Frame(c, style="Inner.TFrame")
         row.grid(row=1, column=0, columnspan=3, sticky="w")
         ttk.Spinbox(
             row, from_=-3.0, to=-0.1, increment=0.1, width=6, textvariable=self.ceiling_var, format="%.1f"

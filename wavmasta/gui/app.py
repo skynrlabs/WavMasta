@@ -1,4 +1,4 @@
-"""The main window: sidebar, page area and action bar, plus the shared plumbing the journeys use."""
+"""The main window: top bar, page area and action bar, plus the shared plumbing the journeys use."""
 
 import contextlib
 import os
@@ -14,9 +14,9 @@ from .dialogs import show_about
 from .journeys import CheckJourney, MasterJourney, PreviewJourney, Renders
 from .pages import PAGES, HelpPage, HistoryPage, MasterPage, SettingsPage
 from .shortcuts import bind_shortcuts
-from .sidebar import Sidebar
 from .status_card import StatusCard
 from .theme import THEME, apply_styles, make_fonts
+from .topbar import TopBar
 
 IS_WINDOWS = sys.platform.startswith("win")
 
@@ -53,8 +53,8 @@ class WavMastaApp:
         root = self.root
         root.title("WavMasta")
         root.configure(bg=THEME["bg"])
-        root.minsize(980, 720)
-        root.geometry("1080x820")
+        root.minsize(900, 740)
+        root.geometry("1000x840")
         ico = os.path.join(ASSETS_DIR, "wavmasta.ico")
         if IS_WINDOWS and os.path.exists(ico):
             with contextlib.suppress(tk.TclError):
@@ -103,15 +103,15 @@ class WavMastaApp:
 
     def _build_layout(self):
         root = self.root
-        root.columnconfigure(1, weight=1)
-        root.rowconfigure(0, weight=1)
-        self.sidebar = Sidebar(
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(1, weight=1)
+        self.nav = TopBar(
             root, [(k, label) for k, label, _, _ in PAGES], self.show_page, self.fonts, self.images.get("small")
         )
-        self.sidebar.grid(row=0, column=0, sticky="ns")
+        self.nav.grid(row=0, column=0, sticky="ew")
 
-        main = self.main = ttk.Frame(root, padding=(22, 16, 22, 12))
-        main.grid(row=0, column=1, sticky="nsew")
+        main = self.main = ttk.Frame(root, padding=(24, 16, 24, 14))
+        main.grid(row=1, column=0, sticky="nsew")
         main.columnconfigure(0, weight=1)
         main.rowconfigure(1, weight=1)
 
@@ -171,7 +171,7 @@ class WavMastaApp:
             if k == key:
                 self.page_title.set(title)
                 self.page_sub.set(sub)
-        self.sidebar.set_active(key)
+        self.nav.set_active(key)
 
     @property
     def activity(self):
@@ -179,7 +179,7 @@ class WavMastaApp:
 
     def _on_tracks_changed(self, message=None):
         n = len(self.master_page.tracks)
-        self.sidebar.set_label("master", f"Master  ({n})" if n else "Master")
+        self.nav.set_label("master", f"Master  ({n})" if n else "Master")
         self.action.set_master_label(self.master_page.tracks)
         if message:
             self.say(message, "ok")

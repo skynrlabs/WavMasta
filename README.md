@@ -13,7 +13,7 @@
   <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-8b5cf6?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
 </p>
 
-Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/wavmasta) if it saves you time.
+Free to download. On [itch.io](https://skynrlabs.itch.io/wavmasta) it's pay what you want: the suggested price is $10, and $0 is fine too.
 
 ![WavMasta screenshot](docs/screenshot.png)
 
@@ -63,7 +63,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 
 ### Windows (recommended)
 
-1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want, $0 is fine).
+1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want: $10 suggested, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed.
 3. Open **WavMasta** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -277,7 +277,7 @@ WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. 
 
 ## 💜 Support WavMasta
 
-WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other musicians helps too.
+WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($10 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other musicians helps too.
 
 ---
 

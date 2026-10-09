@@ -39,7 +39,7 @@ def test_hum_fix_can_be_turned_off(audio):
 def test_denoise_lowers_hiss_and_leaves_the_low_end_alone(audio):
     from scipy.signal import butter, sosfiltfilt
 
-    clean, x = audio["clean"], audio["hiss"]
+    clean, x = synth.song(), audio["hiss"]  # the same song without the hiss
     y = cleanup.denoise(x, SR, 0.5)
     hp = butter(6, 5000, "highpass", fs=SR, output="sos")  # the synth music has nothing up here: pure hiss
     lp = butter(6, 800, "lowpass", fs=SR, output="sos")  # bass and the body of the chords

@@ -41,14 +41,18 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 🧹 **Noise reduction**: a gentle de-hisser that works where hiss lives (above 1 kHz) and never touches the bass or the body of the mix
 - 🔌 **Hum and whine removal**: finds tones that sit there the whole song (50/60 Hz hum, a whine, ringing) and notches them out with very narrow filters, while the notes in your music are left alone
 - ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs; **Check** works out how many dB your song needs
+- 🐍 **De-esser**: turns down sharp "s" and "t" sounds in the vocal, only while each one lasts and only above 4.5 kHz; **Check** suggests an amount when it hears them
+- ✂️ **Trim and fade**: cuts dead air off both ends (without clicks) and fades the ending smoothly; **Check** spots songs that stop suddenly
 - 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
 - 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
 - 🧲 **Glue and width**: bus compression to hold the mix together, and stereo width that keeps bass and kick centred
-- 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a true-peak limiter
+- 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a look-ahead true-peak limiter that never clips
 - ▶️ **Fair before/after**: hear the loudest 20 seconds of the original and the master at the same loudness
+- 〰️ **Waveform before and after**: the master drawn over the original, with the ceiling and the stretch you heard, so you can see what changed
 - 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
-- 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** gives an album one sound
-- 📋 **A report for every master**: History shows each song's clipping, true peak, loudness, punch, and what cleanup removed (hiss, hum and whine, harsh highs)
+- 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** copies one sound to the rest
+- 💿 **Album mode**: listens to the whole set, matches the songs' tone to the album's average and masters them all to the same loudness, so the record plays as one
+- 📋 **A report for every master**: History shows each song's clipping, true peak, loudness, punch, what cleanup removed (hiss, hum and whine, harsh highs, sharp "s" sounds), what was trimmed and how it ends
 - ✅ **Always know where you stand**: each song shows when it's saved, and says *changed · master again* if you tweak it afterwards
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
@@ -95,11 +99,11 @@ Everything happens on the **Master** page, top to bottom:
 
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
-3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match). **Apply to all songs** copies the sound to the rest.
-4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show.
+3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
+4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, and what cleanup removed. Double-click a saved song to open its folder.
+**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, what cleanup removed, trimming and the ending. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
 
 **Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
@@ -107,14 +111,18 @@ Everything happens on the **Master** page, top to bottom:
 
 | Step | What it does |
 |---|---|
+| Trim | Cuts silence off both ends, keeping a short breath before the first note |
 | Rumble filter | Removes sub-bass below 25 Hz you can't hear but that eats loudness |
 | Hum and whine | Very narrow notches on steady tones (found on the untouched audio first) |
 | Noise reduction | De-hisses above 1 kHz, only what sits near the noise floor |
 | Tame harsh highs | A gentle shelf cut above 11 kHz |
+| De-ess | Turns the band above 4.5 kHz down only while an "s" lasts |
+| Album match | Nudges the song's tone toward the album's average (album mode only) |
 | Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song |
 | Stereo width | Mid/side width; bass and kick stay centred |
 | Glue | Slow-attack bus compression |
-| Loudness and limiter | Lands on the target LUFS with true peaks under the ceiling |
+| Fade-out | Smooth fade to silence (before loudness, so the song still lands on target) |
+| Loudness and limiter | Lands on the target LUFS with a look-ahead true-peak limiter; never clips |
 
 ### ⌨️ Keyboard shortcuts
 
@@ -140,6 +148,7 @@ wavmasta "My Song.wav" --check
 wavmasta "My Song.wav" --tone country --auto
 wavmasta *.wav --tone roots-rock --loudness -14 --glue 40 --out masters
 wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
+wavmasta album/*.wav --album --fade-out 3 --out masters
 ```
 
 | Option | What it does |
@@ -151,10 +160,14 @@ wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
 | `--denoise` | Noise reduction `0`-`100` (default `0`) |
 | `--no-hum-fix` | Don't notch out steady hum and whine |
 | `--tame-highs` | Cut harsh highs, `0`-`6` dB |
+| `--deess` | Tame sharp "s" sounds, `0`-`100` (default `0`) |
+| `--fade-out` | Fade the ending over this many seconds, `0`-`10` |
+| `--no-trim` | Keep silence at the start and end |
+| `--album` | Master all the songs as one album: matched tone and loudness |
 | `--glue` | Glue compression `0`-`100` (default `30`) |
 | `--width` | Stereo width `0`-`150` (default `100`) |
 | `--reference` | A finished song to match tone and loudness to |
-| `--auto` | Use the cleanup Check suggests for each song |
+| `--auto` | Use what Check suggests for each song (cleanup, de-ess, trim, fade) |
 | `--format` | `wav` (24-bit), `wav16`, `flac` or `mp3` |
 | `--out` | Folder for the mastered files |
 
@@ -178,6 +191,8 @@ wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
 | The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, and lower **Glue** to 20-30%. |
 | Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
 | The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
+| Vocals sound lispy or dull after de-essing | Lower **De-ess**. 30-50% is usually enough. |
+| Album songs still sound different | Album mode matches overall tone and loudness, not arrangement. Check that one song isn't using a **Reference**: a reference decides that song's tone instead. |
 | A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
 | **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |
 | Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** page and master again. |
@@ -199,9 +214,12 @@ wavmasta/
 │   ├── pipeline.py      One song: load → clean up → master → save
 │   ├── analysis.py      Loudness (BS.1770), true peak, hiss, hum/whine and harsh-highs detection
 │   ├── cleanup.py       De-hisser, hum and whine notches, harsh-highs shelf
-│   ├── chain.py         Tone EQ, reference matching, width, glue, loudness and limiter
+│   ├── deess.py         Finding and taming sharp "s" sounds
+│   ├── edges.py         Trimming silence, fade-outs, spotting sudden endings
+│   ├── album.py         Album mode: the set's shared tone and loudness
+│   ├── chain.py         Tone EQ, reference matching, width, glue, loudness and true-peak limiter
 │   ├── audio.py         Reading and writing WAV, FLAC, MP3 (with dither for 16-bit)
-│   └── preview.py       Level-matched before/after clips and playback
+│   └── preview.py       Level-matched before/after clips, playback and waveform outlines
 └── gui/                 The window
     ├── app.py           Main window and shared plumbing
     ├── journeys.py      Check, Before/After and Master workflows
@@ -209,6 +227,7 @@ wavmasta/
     ├── model.py         Each song's own sound settings and status
     ├── tracks_table.py  The songs list: a row per song with Before, After and status
     ├── sound_card.py    The selected song's sound card
+    ├── waveform.py      The before/after waveform card
     ├── sidebar.py       Left-hand navigation
     ├── status_card.py   The large status message above the buttons
     ├── action_bar.py    Save location, Open folder and Master
@@ -245,6 +264,7 @@ master_file("My Song.wav", Settings(tone="Country", denoise=40, target_lufs=-14)
 | UI | Tkinter |
 | Audio processing | pedalboard (Spotify), NumPy, SciPy |
 | Loudness metering | Built-in ITU-R BS.1770-4 meter (checked against pyloudnorm in the tests) |
+| Limiter | Built-in look-ahead limiter with 4x oversampled true-peak detection |
 | Windows app | PyInstaller + Inno Setup |
 
 ---

@@ -10,7 +10,8 @@ import os
 import tempfile
 import threading
 
-from ..core import Player, ab_clips, analyze, load, master_audio, output_path, save
+from ..core import Player, ab_clips, analyze, envelope, load, master_audio, output_path, save
+from ..core import album as albums
 from ..core.preview import write_wav16
 from .activity import master_report, short_path
 
@@ -39,9 +40,39 @@ class Renders:
             self.key, self.value = key, value
 
 
-def render(app, track, ceiling, log=lambda m: None):
-    """Load, measure and master one song (or reuse the last result). Returns a dict."""
-    key = (track.path, os.path.getmtime(track.path), track.sound(), ceiling)
+class AlbumProfiles:
+    """The album's shared tone, worked out once from all its songs and reused while the set and the
+    files stay the same (Before/After and Master all need it)."""
+
+    def __init__(self):
+        self.key = None
+        self.value = None
+        self.lock = threading.Lock()
+
+    def get(self, tracks):
+        key = tuple(sorted((os.path.abspath(t.path), os.path.getmtime(t.path)) for t in tracks))
+        with self.lock:
+            if key != self.key:
+                songs = []
+                for t in tracks:
+                    audio, sr = load(t.path)
+                    songs.append((os.path.abspath(t.path), audio, sr))
+                self.value, self.key = albums.profile(songs), key
+            return self.value
+
+
+def album_context(app):
+    """(the album's songs, its key) when Album mode is on, else (None, None). Reads the window, so
+    call it on the window's thread and hand the result to the background work."""
+    page = app.master_page
+    return (list(page.tracks), page.album_key()) if page.album_on() else (None, None)
+
+
+def render(app, track, ceiling, album=(None, None), log=lambda m: None):
+    """Load, measure and master one song (or reuse the last result). Returns a dict.
+    album: album_context(), taken on the window's thread. Safe to call from a background thread."""
+    album_tracks, album_key = album
+    key = (track.path, os.path.getmtime(track.path), track.sound(), ceiling, album_key)
     cached = app.renders.get(key)
     if cached:
         return cached
@@ -51,10 +82,32 @@ def render(app, track, ceiling, log=lambda m: None):
         return {"audio": audio, "mastered": audio, "sr": sr, "before": before, "info": {"tones": []}, "key": key}
     s = track.settings(ceiling)
     reference = load(s.reference) if s.reference else None
-    mastered, info = master_audio(audio, sr, s, log=log, reference=reference, tones=before.tones)
+    album = app.albums.get(album_tracks) if album_tracks else None
+    mastered, info = master_audio(
+        audio, sr, s, log=log, reference=reference, tones=before.tones, album=album, key=os.path.abspath(track.path)
+    )
     out = {"audio": audio, "mastered": mastered, "sr": sr, "before": before, "info": info, "key": key}
+    out["wave"] = {
+        "before": envelope(audio),
+        "seconds": audio.shape[1] / sr,
+        "after": envelope(mastered),
+        "after_start": info.get("trim", (0.0, 0.0))[0],
+        "after_seconds": mastered.shape[1] / sr,
+        "key": key,
+        "mtime": key[1],
+    }
     app.renders.put(key, out)
     return out
+
+
+def show_master_waveform(app, track, r, window=None):
+    """Remember a render's waveforms on the song and redraw (call on the window's thread)."""
+    wave = r.get("wave")
+    if not wave:
+        return
+    old = track.extra.get("wave") or {}
+    track.extra["wave"] = dict(wave, window=window or (old.get("window") if old.get("key") == wave["key"] else None))
+    app.update_waveform()
 
 
 class CheckJourney:
@@ -140,12 +193,13 @@ class PreviewJourney:
         app.master_page.set_playing(None)
         app.set_busy(True)
         app.say(f"Building the before/after preview of {track.name}...", "busy", "Mastering the song in memory first")
-        threading.Thread(target=self._work, args=(track, which, ceiling), daemon=True).start()
+        args = (track, which, ceiling, album_context(app))
+        threading.Thread(target=self._work, args=args, daemon=True).start()
 
-    def _work(self, track, which, ceiling):
+    def _work(self, track, which, ceiling, album):
         app = self.app
         try:
-            r = render(app, track, ceiling)
+            r = render(app, track, ceiling, album)
             if r["before"].lufs == float("-inf"):
                 app.post(lambda: (app.set_busy(False), app.say(f"{track.name} is silent", "warn")))
                 return
@@ -167,6 +221,7 @@ class PreviewJourney:
     def _play(self, track, which, wav, start, seconds, r, first):
         app = self.app
         app.set_busy(False)
+        show_master_waveform(app, track, r, window=(start, seconds))
         if track.report is None:
             track.report = r["before"]
             if app.master_page.selected_track() is track:
@@ -239,7 +294,8 @@ class MasterJourney:
                 return
         fmt = app.settings_page.format_var.get()
         out_dir = app.settings_page.out_dir
-        app.activity.action(f"Master {plural(len(tracks), 'song')}", f"{fmt} · ceiling {ceiling:g} dBTP")
+        album = " · album mode" if app.master_page.album_on() else ""
+        app.activity.action(f"Master {plural(len(tracks), 'song')}", f"{fmt} · ceiling {ceiling:g} dBTP{album}")
         self.sigs = {id(t): app.master_page.signature(t) for t in tracks}
         for t in tracks:
             t.saved_sig = None
@@ -250,7 +306,7 @@ class MasterJourney:
         app.action.open_btn.state(["disabled"])
         app.say(f"Mastering {plural(len(tracks), 'song')}...", "busy", "Each row shows its result as it finishes")
         app.status_card.start_progress(len(tracks))
-        args = (tracks, ceiling, fmt, out_dir)
+        args = (tracks, ceiling, fmt, out_dir, album_context(app))
         threading.Thread(target=self._work, args=args, daemon=True).start()
 
     def _status(self, track, text, kind, saved=None):
@@ -260,10 +316,14 @@ class MasterJourney:
             track.saved = saved
         self.app.master_page.show_status(track)
 
-    def _work(self, tracks, ceiling, fmt, out_dir):
+    def _work(self, tracks, ceiling, fmt, out_dir, album_ctx):
         app = self.app
         feed = app.activity
         ok = 0
+        levels_before, levels_after = [], []
+        album = album_ctx[0] is not None
+        if album:
+            app.post(lambda: app.say("Listening to the whole album first...", "busy", "To match the songs' tone"))
         for i, t in enumerate(tracks):
             msg = f"Mastering {t.name}  ({i + 1} of {len(tracks)})"
             app.post(
@@ -274,7 +334,7 @@ class MasterJourney:
                 )
             )
             try:
-                r = render(app, t, ceiling)
+                r = render(app, t, ceiling, album_ctx)
                 if r["before"].lufs == float("-inf"):
                     app.post(
                         lambda s=t: (
@@ -284,6 +344,8 @@ class MasterJourney:
                     )
                     continue
                 after = analyze(r["mastered"], r["sr"])
+                levels_before.append(r["before"].lufs)
+                levels_after.append(after.lufs)
                 dest = save(output_path(t.path, out_dir, fmt), r["mastered"], r["sr"], fmt)
                 ok += 1
                 self.last_out_dir = os.path.dirname(dest)
@@ -292,15 +354,23 @@ class MasterJourney:
                 report = master_report(result, t.settings(ceiling), fmt, ceiling)
                 done = f"saved · {after.lufs:.1f} LUFS"
                 app.post(
-                    lambda s=t, d=details, o=dest, x=done, rep=report: (
+                    lambda s=t, d=details, o=dest, x=done, rep=report, rr=r: (
                         feed.details(feed.song(s.name, "mastered", d, saved=o), rep),
                         self._status(s, x, "ok", saved=o),
                         app.master_page.mark_saved(s, self.sigs[id(s)]),
+                        show_master_waveform(app, s, rr),
                     )
                 )
             except Exception as exc:  # keep going with the other songs
                 err = f"couldn't master: {exc}"
                 app.post(lambda s=t, e=err: (feed.problem(s.name, e), self._status(s, e, "warn")))
+        if album and len(levels_after) >= 2:
+            line = (
+                "Album",
+                f"within {albums.spread_db(levels_after):.1f} LU",
+                f"loudness spread was {albums.spread_db(levels_before):.1f} LU · tone matched across the set",
+            )
+            app.post(lambda: feed.summary(*line))
         if ok:
             summary = ("Done", f"{ok} of {len(tracks)} saved", f"in {short_path(self.last_out_dir)}")
         else:

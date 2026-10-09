@@ -101,3 +101,15 @@ class Player:
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
         self.proc = None
+
+
+def envelope(audio, points=1200):
+    """The waveform's outline for drawing: the loudest sample in each of `points` slices, 0-1."""
+    peak = np.max(np.abs(audio), axis=0)
+    n = peak.size
+    if n == 0:
+        return np.zeros(points, dtype=np.float32)
+    edges = np.linspace(0, n, points + 1).astype(int)
+    edges[-1] = n
+    out = np.maximum.reduceat(peak, np.minimum(edges[:-1], n - 1))
+    return np.clip(out, 0, 1).astype(np.float32)

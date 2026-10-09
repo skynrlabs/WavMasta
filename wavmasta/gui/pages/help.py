@@ -22,12 +22,14 @@ HELP_TEXT = [
     (
         "p",
         "3.  Pick a Tone and a Loudness. Streaming (-14 LUFS) suits Spotify, YouTube and Apple Music, which turn "
-        "louder songs down anyway. Apply to all songs gives an album the same sound.",
+        "louder songs down anyway. Apply to all songs copies the sound to the rest; Album mode (above the "
+        "songs list) also matches their tone and loudness so the set plays as one record.",
     ),
     (
         "p",
         "4.  Press After to hear the master, Before to hear the original. Both play the loudest 20 seconds, at "
-        "the same loudness, so you hear the difference in sound, not just volume. Esc stops.",
+        "the same loudness, so you hear the difference in sound, not just volume. Esc stops. The Waveform "
+        "card then draws the master over the original, with the stretch you heard shaded.",
     ),
     (
         "p",
@@ -48,6 +50,22 @@ HELP_TEXT = [
         "Reference: choose a finished, released song you like the sound of. WavMasta matches its tonal balance "
         "and loudness instead of using Tone and Loudness. Pick one in the same style as yours.",
     ),
+    (
+        "p",
+        "Fade-out: fades the end smoothly to silence over this many seconds. Check suggests 3 s when a song "
+        "stops suddenly. The fade is counted in the loudness, so the song still lands on target.",
+    ),
+    (
+        "p",
+        "Trim silence from the start and end: cuts dead air off both ends, keeping a short breath before the "
+        "first note and a little room after the last one so nothing starts with a click.",
+    ),
+    (
+        "p",
+        "Album mode: with two or more songs, WavMasta listens to the whole set first, nudges each song's tone "
+        "toward the album's average (never more than 4 dB) and masters them all to the same loudness. "
+        "Adding or removing a song changes the album, so saved songs say 'changed · master again'.",
+    ),
     ("h", "Cleanup"),
     (
         "p",
@@ -58,6 +76,12 @@ HELP_TEXT = [
         "p",
         "Tame harsh highs: softens fizzy, brittle top end above 11 kHz, common in AI-generated songs. "
         "Check works out how much your song needs (it aims for a natural top end) and Use suggestions sets it.",
+    ),
+    (
+        "p",
+        "De-ess: turns down sharp 's' and 't' sounds in the vocal, only for the moment each one happens and "
+        "only above 4.5 kHz, so the rest of the song is untouched. AI-generated vocals often need it; Check "
+        "suggests an amount when it hears them.",
     ),
     (
         "p",

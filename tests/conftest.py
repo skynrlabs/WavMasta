@@ -2,6 +2,8 @@
 
 import pytest
 
+from wavmasta.core.edges import fade_out
+
 from . import synth
 
 
@@ -20,7 +22,7 @@ def songs(tmp_path_factory):
 
     d = tmp_path_factory.mktemp("songs")
     made = {
-        "clean": synth.song(),
+        "clean": fade_out(synth.song(), synth.SR, 3),  # a clean song with a proper ending
         "hiss": synth.song(hiss=0.004),
         "whine": synth.song(whine_hz=3150, whine=0.01),
         "hum": synth.song(hum=0.01),
@@ -36,7 +38,7 @@ def songs(tmp_path_factory):
 def audio():
     """The same songs as arrays (no file round trip), for engine tests."""
     return {
-        "clean": synth.song(),
+        "clean": fade_out(synth.song(), synth.SR, 3),  # a clean song with a proper ending
         "hiss": synth.song(hiss=0.004),
         "whine": synth.song(whine_hz=3150, whine=0.01),
         "hum": synth.song(hum=0.01),

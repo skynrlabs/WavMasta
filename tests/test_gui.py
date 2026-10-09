@@ -495,3 +495,132 @@ def test_check_results_bubble_colours_each_finding(app, monkeypatch, copies):
 def test_bubble_before_check_invites_you_to_check(app, monkeypatch, copies):
     add(app, monkeypatch, [copies["clean"]])
     assert "Check this song to measure it" in page(app).card.findings_text()
+
+
+# ---- trim, fade, de-ess, album mode and the waveform
+def wait_for(app, check, timeout=30):
+    end = time.time() + timeout
+    while time.time() < end:
+        app.root.update()
+        if check():
+            return
+        time.sleep(0.05)
+    raise AssertionError("timed out waiting for the window")
+
+
+def test_new_controls_edit_the_selected_song(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    card = page(app).card
+    page(app).select(1)
+    card.deess_var.set(45)
+    card.fade_var.set(3.5)
+    card.trim_var.set(False)
+    card._store()
+    t0, t1 = page(app).tracks
+    assert (t1.deess, t1.fade_out, t1.trim) == (45, 3.5, False)
+    assert (t0.deess, t0.fade_out, t0.trim) == (0, 0.0, True)
+    assert card.deess_text.get().startswith("45%")
+    s = t1.settings(-1.0)
+    assert (s.deess, s.fade_out, s.trim) == (45, 3.5, False)
+    page(app).select(0)
+    assert card.deess_var.get() == 0 and card.trim_var.get() is True
+
+
+def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):
+    from . import synth
+
+    vocal = synth.write(tmp_path / "in" / "Vocal Song.wav", synth.mix(sibilance=0.06))
+    add(app, monkeypatch, [vocal])
+    app.checker.start()
+    wait(app)
+    text = page(app).card.findings_text()
+    assert "'s' sounds" in text and "fade-out" in text
+    app.use_suggestions()
+    t = page(app).tracks[0]
+    assert t.deess >= 50 and t.fade_out == 3.0
+    assert page(app).card.fade_text.get().startswith("3")
+
+
+def test_album_mode_hint_and_staleness(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    p = page(app)
+    assert "each with its own sound" in p.count_hint.get()
+    app.masterer.start()
+    wait(app, 180)
+    assert all(t.status.startswith("saved") for t in p.tracks)
+    p.album_var.set(True)
+    app.root.update()
+    assert "one album" in p.count_hint.get()
+    assert all(t.status == "changed · master again" for t in p.tracks)  # every master depends on the set
+    p.album_var.set(False)
+    app.root.update()
+    assert all(t.status.startswith("saved") for t in p.tracks)
+    # one song is not an album
+    p.remove(1)
+    p.album_var.set(True)
+    assert not p.album_on() and "1 song" in p.count_hint.get()
+
+
+def test_album_master_reports_the_spread(app, monkeypatch, copies, tmp_path):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    page(app).album_var.set(True)
+    app.masterer.start()
+    wait(app, 240)
+    feed = app.activity.as_text()
+    assert "album mode" in feed and "Album | within" in feed and "album tone" in feed
+    assert sorted(os.listdir(tmp_path / "out")) == ["Clean Song - master.wav", "Hum Song - master.wav"]
+
+
+def test_history_shows_trim_fade_and_de_ess(app, monkeypatch, copies, tmp_path):
+    import numpy as np
+
+    from . import synth
+
+    audio = np.pad(synth.mix(sibilance=0.06), ((0, 0), (2 * synth.SR, 0)))
+    padded = synth.write(tmp_path / "in" / "Padded Song.wav", audio)
+    add(app, monkeypatch, [padded, copies["hum"]])
+    t, plain = page(app).tracks
+    t.deess, t.fade_out = 50, 3.0
+    plain.trim = False
+    app.masterer.start()
+    wait(app, 180)
+    feed = app.activity.as_text()
+    for line in (
+        "'S' sounds | de-essed 50%",
+        "Start & end | trimmed",
+        "Ending | 3 s fade-out",
+        "Ending | stops suddenly",
+    ):
+        assert line in feed, line
+
+
+def test_waveform_shows_original_then_master(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    wave = page(app).wave
+    wait_for(app, lambda: wave.data and wave.data.get("before") is not None)
+    assert wave.data["after"] is None and "press After" in wave.as_text()
+    page(app)._play(0, "after")
+    wait(app)
+    wait_for(app, lambda: wave.data.get("after") is not None)
+    d = wave.data
+    assert d["window"] and d["ceiling"] < 1 and not d["stale"]
+    assert "master shown over the original" in wave.as_text()
+    assert len(wave.canvas.find_all()) > 100  # bars were drawn
+    page(app)._play(0, "after")  # stop, then change a setting: the drawing is out of date
+    card = page(app).card
+    card.noise_var.set(30)
+    card._store()
+    app.root.update()
+    assert wave.data["stale"] and "settings changed" in wave.as_text()
+    card.noise_var.set(0)
+    card._store()
+    app.root.update()
+    assert not wave.data["stale"]
+
+
+def test_waveform_clears_with_the_songs(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    wait_for(app, lambda: page(app).wave.data and page(app).wave.data.get("before") is not None)
+    page(app).clear_tracks()
+    app.root.update()
+    assert page(app).wave.data is None

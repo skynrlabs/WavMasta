@@ -5,13 +5,14 @@ import os
 import queue
 import subprocess
 import sys
+import threading
 import tkinter as tk
 from tkinter import ttk
 
 from ..config import ASSETS_DIR
 from .action_bar import ActionBar
 from .dialogs import show_about
-from .journeys import CheckJourney, MasterJourney, PreviewJourney, Renders
+from .journeys import AlbumProfiles, CheckJourney, MasterJourney, PreviewJourney, Renders
 from .pages import PAGES, HelpPage, HistoryPage, MasterPage, SettingsPage
 from .shortcuts import bind_shortcuts
 from .sidebar import Sidebar
@@ -28,6 +29,7 @@ class WavMastaApp:
         self.busy = False
         self.updates = queue.Queue()  # background threads -> window
         self.renders = Renders()
+        self.albums = AlbumProfiles()
         self._setup_window()
         self.fonts = make_fonts()
         apply_styles(root, self.fonts)
@@ -44,6 +46,7 @@ class WavMastaApp:
         root.protocol("WM_DELETE_WINDOW", self.quit)
 
         self.master_page.on_lock = self._on_listening
+        self.master_page.on_sound_change = self.update_waveform
         self.master_page.refresh()
         self.area.skip = [self.master_page.table]  # the songs list scrolls by itself
         for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
@@ -213,9 +216,59 @@ class WavMastaApp:
     def activity(self):
         return self.history_page.activity
 
+    # ---- the Waveform card
+    def update_waveform(self):
+        """Draw the selected song's waveform: the original right away (read in the background the
+        first time), with the master over it once Before/After or Master has made one."""
+        page = self.master_page
+        track = page.selected_track()
+        if track is None:
+            page.wave.show(None)
+            return
+        try:
+            mtime = os.path.getmtime(track.path)
+        except OSError:
+            page.wave.show({"before": None, "note": "Can't read this file"})
+            return
+        wave = track.extra.get("wave")
+        if not wave or wave.get("mtime") != mtime:
+            page.wave.show({"before": None, "note": "Reading the song..."})
+            if not track.extra.get("wave_loading"):
+                track.extra["wave_loading"] = True
+                threading.Thread(target=self._read_waveform, args=(track, mtime), daemon=True).start()
+            return
+        ceiling, err = self.settings_page.ceiling()
+        current = (track.path, mtime, track.sound(), ceiling, page.album_key())
+        page.wave.show(
+            dict(
+                wave,
+                ceiling=10 ** (ceiling / 20) if not err else None,
+                stale=wave.get("after") is not None and wave.get("key") != current,
+            )
+        )
+
+    def _read_waveform(self, track, mtime):
+        from ..core import envelope, load
+
+        try:
+            audio, sr = load(track.path)
+            wave = {"before": envelope(audio), "seconds": audio.shape[1] / sr, "after": None, "mtime": mtime}
+        except Exception:
+            wave = None
+
+        def done():
+            track.extra["wave_loading"] = False
+            if wave:
+                track.extra["wave"] = wave
+            if self.master_page.selected_track() is track:
+                self.update_waveform()
+
+        self.post(done)
+
     def _on_tracks_changed(self, message=None):
         n = len(self.master_page.tracks)
         self.nav.set_label("master", f"Master  ({n})" if n else "Master")
+        self.update_waveform()
         self.action.set_master_label(self.master_page.tracks)
         if message:
             self.say(message, "ok")
@@ -267,7 +320,14 @@ class WavMastaApp:
         self.master_page.card.show(track, len(self.master_page.tracks))
         self.master_page.refresh_staleness()
         if changed:
-            names = {"denoise": "noise reduction", "fix_tones": "hum and whine", "tame_top": "harsh highs"}
+            names = {
+                "denoise": "noise reduction",
+                "fix_tones": "hum and whine",
+                "tame_top": "harsh highs",
+                "deess": "de-ess",
+                "trim": "trim silence",
+                "fade_out": "fade-out",
+            }
             self.say(
                 "Suggestions applied",
                 "ok",

@@ -42,7 +42,9 @@ def test_true_peak_finds_peaks_between_samples():
 
 # ---- finding problems
 def test_clean_song_has_no_findings(audio):
-    r = analyze(audio["clean"], SR)
+    from wavmasta.core.edges import fade_out
+
+    r = analyze(fade_out(audio["clean"], SR, 3), SR)  # a song with a proper ending
     assert not r.hiss and not r.fizzy and r.tones == []
     assert r.findings() == ["No noise problems found. Pick a tone and loudness and master it."]
 

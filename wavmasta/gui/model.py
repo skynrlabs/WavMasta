@@ -7,7 +7,9 @@ from dataclasses import dataclass, field
 from ..config import DEFAULT_LOUDNESS, LOUDNESS
 from ..core import Settings
 
-SOUND_FIELDS = ("tone", "loudness", "denoise", "fix_tones", "tame_top", "glue", "width", "reference")
+SOUND_FIELDS = (
+    "tone", "loudness", "denoise", "fix_tones", "tame_top", "glue", "width", "reference", "deess", "fade_out", "trim",
+)  # fmt: skip
 
 
 @dataclass
@@ -21,6 +23,9 @@ class Track:
     glue: int = 30
     width: int = 100
     reference: str | None = None
+    deess: int = 0
+    fade_out: float = 0.0
+    trim: bool = True
     report: object = None  # the latest analysis.Report, once analysed
     status: str = "not mastered yet"
     status_kind: str = "muted"  # muted, busy, ok or warn
@@ -48,6 +53,9 @@ class Track:
             glue=self.glue,
             width=self.width,
             reference=self.reference,
+            deess=self.deess,
+            fade_out=self.fade_out,
+            trim=self.trim,
         )
 
     def reset(self):

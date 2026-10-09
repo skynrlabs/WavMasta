@@ -10,6 +10,8 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
+import numpy as np
+
 from .theme import THEME as T
 from .theme import px
 from .tracks_table import fit_text
@@ -53,14 +55,11 @@ def master_report(result, settings, fmt, ceiling):
         )
     )
     change = after.lufs - before.lufs
-    rows.append(
-        (
-            "Loudness",
-            f"{after.lufs:.1f} LUFS",
-            f"was {before.lufs:.1f} ({change:+.1f} dB) · target {info['target']:g}",
-            abs(after.lufs - info["target"]) < 0.5,
-        )
-    )
+    on_target = abs(after.lufs - info["target"]) < 0.5
+    detail = f"was {before.lufs:.1f} ({change:+.1f} dB) · target {info['target']:g}"
+    if not on_target and after.lufs < info["target"]:
+        detail += " · as loud as it gets without distortion"
+    rows.append(("Loudness", f"{after.lufs:.1f} LUFS", detail, on_target))
     plr = after.true_peak - after.lufs
     if plr >= 9:
         feel = "open and punchy"
@@ -94,8 +93,26 @@ def master_report(result, settings, fmt, ceiling):
         rows.append(
             ("Harsh highs", "found, not softened", f"try Tame harsh highs at -{before.tame_amount:g} dB", False)
         )
+    if settings.deess:
+        rows.append(("'S' sounds", f"de-essed {settings.deess}%", "only during each 's', above 4.5 kHz", True))
+    elif np.isfinite(before.sibilance) and before.suggested().get("deess"):
+        rows.append(("'S' sounds", "sharp, not de-essed", f"try De-ess at {before.suggested()['deess']}%", False))
+    # start and end
+    cut_start, cut_end = info.get("trim", (0.0, 0.0))
+    if cut_start or cut_end:
+        rows.append(
+            ("Start & end", "trimmed", f"{cut_start:.1f} s of silence at the start, {cut_end:.1f} s at the end", True)
+        )
+    elif not settings.trim and max(before.lead_silence, before.tail_silence) > 1.0:
+        rows.append(("Start & end", "silence kept", "Trim silence is off for this song", False))
+    if info.get("fade"):
+        rows.append(("Ending", f"{info['fade']:g} s fade-out", "smooth to silence", True))
+    elif before.abrupt_end:
+        rows.append(("Ending", "stops suddenly", f"try a {before.suggested().get('fade_out', 3):g} s fade-out", False))
     # sound and file
     tone = f"matched to {os.path.basename(settings.reference)}" if settings.reference else settings.tone
+    if info.get("album"):
+        tone += " · album tone"
     extra = f"glue {settings.glue}% · width {settings.width}%"
     rows.append(("Sound", tone, extra, True))
     rows.append(

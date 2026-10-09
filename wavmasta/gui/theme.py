@@ -177,6 +177,7 @@ def apply_styles(root, F):
         indicatorforeground=T["accent_text"],
         indicatormargin=4,
     )
+    st.configure("Card.TCheckbutton", font=F["btn"])
     st.map(
         "TCheckbutton",
         background=[("active", T["card"])],

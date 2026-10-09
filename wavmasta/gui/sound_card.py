@@ -1,8 +1,9 @@
 """The '<song> sound' card: how the song selected in the list will be mastered.
 
-Left: the mastering itself (tone, loudness, glue, width, or matching a reference song).
-Right: cleanup (noise, harsh highs, hum and whine), plus Check this song, which measures the
-song and suggests cleanup settings.
+Left: the mastering itself (tone, loudness, glue, width, or matching a reference song) and the
+song's ending (fade-out, trimming silence).
+Right: cleanup (noise, harsh highs, sharp 's' sounds, hum and whine), plus Check this song, which
+measures the song and suggests settings.
 """
 
 import os
@@ -23,6 +24,14 @@ def denoise_word(v):
 
 def glue_word(v):
     return "off" if v == 0 else "gentle" if v <= 35 else "firm" if v <= 70 else "heavy"
+
+
+def deess_word(v):
+    return "off" if v == 0 else "light" if v <= 35 else "medium" if v <= 65 else "strong"
+
+
+def fade_word(v):
+    return "none" if v == 0 else f"{v:g} s"
 
 
 def width_word(v):
@@ -115,6 +124,12 @@ class SoundCard(ttk.Frame):
         ttk.Label(f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left").grid(
             row=7, column=1, sticky="w"
         )
+        self.fade_var, self.fade_text = tk.DoubleVar(value=0.0), tk.StringVar()
+        self._slider_row(f, 8, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
+        self.trim_var = tk.BooleanVar(value=True)
+        self.trim_var.trace_add("write", lambda *_: self._store())
+        self.trim_check = ttk.Checkbutton(f, text="Trim silence from the start and end", variable=self.trim_var)
+        self.trim_check.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
     # ---- right: cleanup and checking
     def _build_cleanup(self, f, fonts, on_analyze, on_suggest):
@@ -124,19 +139,21 @@ class SoundCard(ttk.Frame):
         self._slider_row(f, 1, "Noise reduction", self.noise_var, 0, 100, 5, self.noise_text, lambda v: self._store())
         self.top_var, self.top_text = tk.DoubleVar(value=0.0), tk.StringVar()
         self._slider_row(f, 2, "Tame harsh highs", self.top_var, 0, 6, 0.5, self.top_text, lambda v: self._store())
+        self.deess_var, self.deess_text = tk.IntVar(value=0), tk.StringVar()
+        self._slider_row(f, 3, "De-ess", self.deess_var, 0, 100, 5, self.deess_text, lambda v: self._store())
         self.hum_var = tk.BooleanVar(value=True)
         self.hum_var.trace_add("write", lambda *_: self._store())
         self.hum_check = ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var)
-        self.hum_check.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 6))
+        self.hum_check.grid(row=4, column=0, columnspan=2, sticky="w", pady=(4, 6))
         btns = ttk.Frame(f, style="Inner.TFrame")
-        btns.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 4))
+        btns.grid(row=5, column=0, columnspan=2, sticky="w", pady=(2, 4))
         self.check_btn = ttk.Button(btns, text="Check this song", style="Small.TButton", command=on_analyze)
         self.check_btn.pack(side="left")
         self.suggest_btn = ttk.Button(btns, text="✦ Use suggestions", style="Pink.TButton", command=on_suggest)
         # Check results: a rounded bubble under the buttons, one coloured line per finding
         self.fonts = fonts
         self.bubble = Bubble(f)
-        self.bubble.grid(row=5, column=0, columnspan=2, sticky="nw", pady=(6, 0))
+        self.bubble.grid(row=6, column=0, columnspan=2, sticky="nw", pady=(6, 0))
 
     # ---- showing a song
     def show(self, track, count=0):
@@ -166,6 +183,9 @@ class SoundCard(ttk.Frame):
         self.noise_var.set(track.denoise)
         self.top_var.set(track.tame_top)
         self.hum_var.set(track.fix_tones)
+        self.deess_var.set(track.deess)
+        self.fade_var.set(track.fade_out)
+        self.trim_var.set(track.trim)
         self._loading = False
         self._refresh_texts()
         self.show_report(track.report)
@@ -249,11 +269,13 @@ class SoundCard(ttk.Frame):
         self.width_text.set(f"{t.width}% · {width_word(t.width)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
         self.top_text.set("off" if not t.tame_top else f"-{t.tame_top:g} dB")
+        self.deess_text.set(f"{t.deess}% · {deess_word(t.deess)}")
+        self.fade_text.set(fade_word(t.fade_out))
         if matched:
             self.ref_text.set(f"Matching tone and loudness to {os.path.basename(t.reference)}")
             self.ref_clear.pack(side="left", padx=(6, 0))
         else:
-            self.ref_text.set("Optional: a finished song whose tone and loudness to match")
+            self.ref_text.set("Optional: match a finished song's tone and loudness")
             self.ref_clear.pack_forget()
 
     # ---- writing changes back to the song
@@ -268,6 +290,9 @@ class SoundCard(ttk.Frame):
         t.denoise = int(float(self.noise_var.get()))
         t.tame_top = round(float(self.top_var.get()) * 2) / 2
         t.fix_tones = bool(self.hum_var.get())
+        t.deess = int(float(self.deess_var.get()))
+        t.fade_out = round(float(self.fade_var.get()) * 2) / 2
+        t.trim = bool(self.trim_var.get())
         self._refresh_texts()
         self.show_report(t.report)
         if self.on_change:
@@ -306,7 +331,10 @@ class SoundCard(ttk.Frame):
         """Lock or unlock every control on the card. note: shown beside the title while locked."""
         self.locked = not on
         self.lock_note = note if not on else ""
-        for b in (self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check):
+        for b in (
+            self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check,
+            self.trim_check,
+        ):  # fmt: skip
             b.state(["!disabled"] if on else ["disabled"])
         for s in self.sliders:
             s.configure(

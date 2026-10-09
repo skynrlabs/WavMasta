@@ -2,8 +2,8 @@
 compression, and loudness with a true-peak limiter."""
 
 import numpy as np
-from pedalboard import Compressor, Gain, HighShelfFilter, Limiter, LowShelfFilter, PeakFilter, Pedalboard
-from scipy.ndimage import uniform_filter1d
+from pedalboard import Compressor, Gain, HighShelfFilter, LowShelfFilter, PeakFilter, Pedalboard
+from scipy.ndimage import minimum_filter1d, uniform_filter1d
 from scipy.signal import fftconvolve, firwin2, welch
 
 from ..config import TONES
@@ -53,22 +53,75 @@ def glue(audio, sr, amount):
     return board(audio, sr).astype(np.float32)
 
 
-def loudness_and_limit(audio, sr, target_lufs, ceiling_db=-1.0):
-    """Bring the song to target loudness with a brick-wall limiter, peaks kept under ceiling (dBTP).
+class TruePeakLimiter:
+    """A look-ahead brick-wall limiter that watches true peaks (between samples too).
 
-    pedalboard's Limiter always outputs up to 0 dBFS, so the limited signal is turned down to the
-    ceiling afterwards, and the input gain is searched (always from the unprocessed audio, so gains
-    never stack up) until the result lands on the target.
+    Clipping-style limiters create distortion that peaks well over the ceiling between samples,
+    so streaming services turn the song down or it crackles after conversion. This one never
+    clips: it estimates each sample's true peak (4x oversampled), looks 2 ms ahead, and lowers the
+    gain smoothly *before* each peak, then lets it recover over the release time.
+
+    The peak detection is done once; trying a different input gain is cheap, which suits the
+    loudness search below.
+    """
+
+    LOOKAHEAD = 0.002  # seconds
+    BLOCK = 64  # samples per step of the release curve
+
+    def __init__(self, audio, sr, release_ms=80.0):
+        from .analysis import _oversampling_phases
+
+        self.audio, self.sr = audio, sr
+        peak = np.max(np.abs(audio), axis=0).astype(np.float32)
+        for taps in _oversampling_phases():
+            for ch in audio:
+                est = np.abs(np.convolve(ch.astype(np.float32), taps.astype(np.float32), mode="same"))
+                np.maximum(peak, est, out=peak)
+        self.peak = peak  # true-peak estimate per sample, before any gain
+        self.release = float(np.exp(-self.BLOCK / (sr * release_ms / 1000.0)))
+
+    def run(self, gain_db, ceiling_db):
+        """The audio turned up by gain_db and limited so true peaks stay at or under ceiling_db."""
+        g = 10 ** (gain_db / 20)
+        limit = 10 ** (ceiling_db / 20)
+        need = np.minimum(1.0, limit / np.maximum(self.peak * g, 1e-12))  # gain each sample needs
+        la = max(1, int(self.LOOKAHEAD * self.sr))
+        # attack: be at the needed gain before the peak arrives (min over the look-ahead), then ease
+        # in with a moving average whose window lies inside that min, so it never undershoots
+        held = minimum_filter1d(need, size=2 * la + 1, mode="nearest")
+        attack = uniform_filter1d(held, size=la, mode="nearest")
+        attack = np.minimum(attack, need)
+        # release: recover smoothly, one block at a time, never faster than the release time
+        n = attack.size
+        nb = -(-n // self.BLOCK)
+        padded = np.pad(attack, (0, nb * self.BLOCK - n), constant_values=1.0)
+        blocks = padded.reshape(nb, self.BLOCK).min(axis=1)
+        smooth = np.empty(nb, dtype=np.float64)
+        level, r = 1.0, self.release
+        for i, b in enumerate(blocks):  # one step per 64 samples: about 165k steps for 4 minutes
+            level = b if b < level else b + (level - b) * r
+            smooth[i] = level
+        curve = np.interp(np.arange(n), np.arange(nb) * self.BLOCK + self.BLOCK / 2, smooth)
+        gain = np.minimum(curve, attack).astype(np.float32)
+        return (self.audio * (g * gain)).astype(np.float32)
+
+
+def loudness_and_limit(audio, sr, target_lufs, ceiling_db=-1.0):
+    """Bring the song to target loudness with a true-peak limiter, peaks kept under ceiling (dBTP).
+
+    The input gain is searched (always applied to the unprocessed audio, so gains never stack up)
+    until the result lands on the target. The limiter aims 0.3 dB under the ceiling, because 4x
+    true-peak meters (the streaming standard) can read a little under the real peak.
     """
     level = lufs(audio, sr)
     if not np.isfinite(level):
         return audio  # silence
+    limiter = TruePeakLimiter(audio, sr)
+    aim = ceiling_db - 0.3
 
     def run(g):
-        out = Pedalboard(
-            [Gain(gain_db=g), Limiter(threshold_db=0.0, release_ms=120.0), Gain(gain_db=ceiling_db - 0.4)]
-        )(audio, sr)
-        return out.astype(np.float32), lufs(out, sr)
+        out = limiter.run(g, aim)
+        return out, lufs(out, sr)
 
     # Secant search: the limiter flattens the response (+3 dB in gives less than +3 dB out),
     # so learn the slope from the last two tries instead of assuming 1:1.
@@ -77,18 +130,16 @@ def loudness_and_limit(audio, sr, target_lufs, ceiling_db=-1.0):
     if abs(got0 - target_lufs) >= 0.1:
         g1 = g0 + (target_lufs - got0)
         out, got1 = run(g1)
-        for _ in range(5):
+        for _ in range(10):
             if abs(got1 - target_lufs) < 0.1 or got1 == got0:
                 break
-            slope = max(0.2, (got1 - got0) / (g1 - g0))
+            slope = max(0.08, (got1 - got0) / (g1 - g0))
             g0, got0 = g1, got1
-            g1 = g1 + (target_lufs - got1) / slope
+            g1 = g1 + min(12.0, (target_lufs - got1) / slope)  # never jump more than 12 dB at once
             out, got1 = run(g1)
-    # Catch overs between samples. 4x metering (the streaming standard) can read up to ~0.2 dB
-    # under the real peak, so aim that much lower.
     safe = ceiling_db - 0.2
     tp = true_peak_db(out)
-    if tp > safe:
+    if tp > safe:  # a last safety net; the limiter keeps this from being needed
         out = (out * 10 ** ((safe - tp) / 20)).astype(np.float32)
     return out
 

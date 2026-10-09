@@ -1,4 +1,7 @@
-"""The songs list: one row per song with Before and After buttons, status and a remove button."""
+"""The songs list: one row per song with its name, status and a remove button.
+
+Before and After live on the sound card, under the settings; the row of the song being heard
+says so in its status."""
 
 import tkinter as tk
 import tkinter.font as tkfont
@@ -10,15 +13,16 @@ from .theme import px
 ROW_HEIGHT = 38
 VISIBLE_ROWS = 4
 STATUS_COLORS = {"muted": "muted", "busy": "accent_soft", "ok": "ok", "warn": "warn"}
-# Pixel widths shared by the heading and every row so the columns line up: Before, After, Song, Status, Remove.
+# Pixel widths shared by the heading and every row so the columns line up: Song, Status, Remove.
 # Song is sized to fit the longest name (see TracksTable._layout); Status takes the rest.
-COLUMNS = [("Hear", 70), ("", 70), ("Song", 200), ("Status", 0), ("", 96)]
+COLUMNS = [("Song", 200), ("Status", 0), ("", 96)]
+SONG = 0  # index of the Song column
 SONG_SHARE = 0.55  # the Song column may use up to this much of the room left after the buttons
 
 
 def _columns(frame, song_width=None):
     for i, (_, width) in enumerate(COLUMNS):
-        w = song_width if (i == 2 and song_width) else px(frame, width)
+        w = song_width if (i == SONG and song_width) else px(frame, width)
         frame.columnconfigure(i, minsize=w, weight=1 if width == 0 else 0)
 
 
@@ -39,10 +43,10 @@ def fit_text(font, text, width):
 class TracksTable(ttk.Frame):
     """Rows are rebuilt when songs are added or removed; selection and status update in place."""
 
-    def __init__(self, parent, fonts, on_select, on_play, on_remove):
+    def __init__(self, parent, fonts, on_select, on_remove):
         super().__init__(parent, style="Inner.TFrame")
         self.F = fonts
-        self.on_select, self.on_play, self.on_remove = on_select, on_play, on_remove
+        self.on_select, self.on_remove = on_select, on_remove
         self.rows = []
         self.selected = None
         self.enabled = True
@@ -59,7 +63,7 @@ class TracksTable(ttk.Frame):
         _columns(head)
         for i, (text, _) in enumerate(COLUMNS):
             tk.Label(head, text=text, bg=T["card"], fg=T["accent_soft"], font=fonts["small"], anchor="w").grid(
-                row=0, column=i, sticky="w", padx=(6, 0) if i == 0 else 0
+                row=0, column=i, sticky="w", padx=(14, 0) if i == SONG else 0
             )
 
         self.canvas = tk.Canvas(self, bg=T["field"], highlightthickness=0, height=px(self, ROW_HEIGHT) * 2)
@@ -102,7 +106,7 @@ class TracksTable(ttk.Frame):
         else:
             self.empty.place(relx=0.5, rely=0.5, anchor="center")
         self.select(selected)
-        self.set_enabled(self.enabled, getattr(self, "keep_listening", False))
+        self.set_enabled(self.enabled)
         p = self.playing
         self.set_playing(p if p is not None and p[0] < n else None)
 
@@ -113,26 +117,17 @@ class TracksTable(ttk.Frame):
         frame.grid_propagate(False)
         frame.rowconfigure(0, weight=1)
         _columns(frame)
-        before = ttk.Button(
-            frame, text="Before", style="Small.TButton", width=6, command=lambda: self.on_play(i, "before")
-        )
-        before.grid(row=0, column=0, sticky="w", padx=(6, 0))
-        after = ttk.Button(
-            frame, text="After", style="Small.TButton", width=6, command=lambda: self.on_play(i, "after")
-        )
-        after.grid(row=0, column=1, sticky="w")
         name = tk.Label(frame, text=track.name, bg=T["field"], fg=T["text"], font=F["btn"], anchor="w")
-        name.grid(row=0, column=2, sticky="ew", padx=(8, 0))
+        name.grid(row=0, column=0, sticky="ew", padx=(14, 0))
         status = tk.Label(frame, text=track.status, bg=T["field"], font=F["body"], anchor="w")
-        status.grid(row=0, column=3, sticky="ew")
+        status.grid(row=0, column=1, sticky="ew")
         remove = ttk.Button(frame, text="Remove", style="Small.TButton", command=lambda: self.on_remove(i))
-        remove.grid(row=0, column=4, sticky="e", padx=(0, 8))
+        remove.grid(row=0, column=2, sticky="e", padx=(0, 8))
         row = {
             "frame": frame,
             "name": name,
             "status": status,
-            "before": before,
-            "after": after,
+            "track": track,
             "remove": remove,
             "full_name": track.name,
             "full_status": track.status,
@@ -160,9 +155,17 @@ class TracksTable(ttk.Frame):
             self._paint_status(self.rows[index], track)
 
     def _paint_status(self, row, track):
-        row["full_status"] = track.status
-        text = fit_text(self.status_font, track.status, self.status_width or 0)
-        row["status"].configure(text=text, fg=T[STATUS_COLORS.get(track.status_kind, "muted")])
+        row["track"] = track
+        i = self.rows.index(row) if row in self.rows else len(self.rows)
+        p = self.playing
+        if p is not None and p[0] == i:  # the song being heard says so, until it stops
+            row["full_status"] = f"▶  playing {p[1]}"
+            color = T["accent2"]
+        else:
+            row["full_status"] = track.status
+            color = T[STATUS_COLORS.get(track.status_kind, "muted")]
+        text = fit_text(self.status_font, row["full_status"], self.status_width or 0)
+        row["status"].configure(text=text, fg=color)
 
     def _layout(self):
         """Size the Song column to the longest name (within reason) and give Status the rest, so no
@@ -170,7 +173,7 @@ class TracksTable(ttk.Frame):
         width = self.canvas.winfo_width()
         if width <= 1:
             return
-        fixed = sum(px(self, w) for (_, w) in COLUMNS if w and _ != "Song") + px(self, 14)
+        fixed = sum(px(self, w) for (_, w) in COLUMNS if w and _ != "Song") + px(self, 22)
         room = max(0, width - fixed)
         gap = px(self, 16)
         longest = max((self.name_font.measure(r["full_name"]) for r in self.rows), default=0) + gap
@@ -182,22 +185,17 @@ class TracksTable(ttk.Frame):
             r["name"].configure(text=fit_text(self.name_font, r["full_name"], song - gap))
             r["status"].configure(text=fit_text(self.status_font, r["full_status"], self.status_width))
 
-    def set_enabled(self, on, keep_listening=False):
-        """on=False locks the rows. keep_listening leaves Before/After/Stop working (used while playing)."""
+    def set_enabled(self, on):
+        """on=False locks the rows: no selecting another song or removing one."""
         self.enabled = on
         for row in self.rows:
             row["remove"].state(["!disabled"] if on else ["disabled"])
-            for key in ("before", "after"):
-                row[key].state(["!disabled"] if on or keep_listening else ["disabled"])
-        self.keep_listening = keep_listening
 
     def set_playing(self, playing):
-        """The button being heard says Stop. playing: (row index, 'before' or 'after') or None."""
+        """Mark the row being heard. playing: (row index, 'before' or 'after') or None."""
         self.playing = playing
-        for i, row in enumerate(self.rows):
-            for which in ("before", "after"):
-                on = playing == (i, which)
-                row[which].configure(text="Stop" if on else which.capitalize())
+        for row in self.rows:
+            self._paint_status(row, row["track"])
 
     def set_drop_highlight(self, on):
         """Light up the list while files are dragged over the window."""

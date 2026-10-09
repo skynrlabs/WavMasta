@@ -11,6 +11,7 @@ import time
 import pytest
 
 tk = pytest.importorskip("tkinter")
+from tkinter import ttk  # noqa: E402
 
 pytestmark = pytest.mark.gui
 
@@ -211,14 +212,16 @@ def test_before_and_after_play_level_matched_clips(app, monkeypatch, copies):
     page(app)._play(0, "after")
     wait(app)
     assert app.played and "wavmasta_after_" in app.played[-1]
-    assert page(app).table.rows[0]["after"].cget("text") == "Stop"
+    assert page(app).card.hear["after"].cget("text") == "Stop"
+    assert page(app).table.rows[0]["status"].cget("text") == "▶  playing after"
     assert status(app).startswith("After:")
     # Before reuses the same render (no second wait) and plays the original
     page(app)._play(0, "before")
     wait(app)
     assert "wavmasta_before_" in app.played[-1]
-    assert page(app).table.rows[0]["before"].cget("text") == "Stop"
-    assert page(app).table.rows[0]["after"].cget("text") == "After"
+    assert page(app).card.hear["before"].cget("text") == "Stop"
+    assert page(app).card.hear["after"].cget("text") == "After"
+    assert page(app).table.rows[0]["status"].cget("text") == "▶  playing before"
     # same loudness, so the comparison is fair
     from wavmasta.core import load
     from wavmasta.core.analysis import lufs
@@ -350,9 +353,8 @@ def test_playing_locks_the_sound_until_stopped(app, monkeypatch, copies):
     assert "disabled" in page(app).add_btn.state() and "disabled" in row["remove"].state()
     assert "disabled" in app.action.master_btn.state()
     assert "Stop" in card.hint.get()
-    # ...but Before, After and Stop still work, on every row
-    for r in page(app).table.rows:
-        assert "disabled" not in r["before"].state() and "disabled" not in r["after"].state()
+    # ...but Before, After and Stop still work
+    assert "disabled" not in card.hear["before"].state() and "disabled" not in card.hear["after"].state()
     # clicking another song's name doesn't move the card away from what's playing
     page(app).table.rows[1]["name"].event_generate("<Button-1>")
     app.root.update()
@@ -367,6 +369,7 @@ def test_playing_locks_the_sound_until_stopped(app, monkeypatch, copies):
     assert "disabled" not in card.tone_box.state() and "disabled" not in app.action.master_btn.state()
     assert "disabled" not in row["remove"].state()
     assert "Stop" not in card.hint.get()
+    assert row["status"].cget("text") == "not mastered yet"  # the row goes back to its status
 
 
 def test_switching_before_and_after_stays_locked(app, monkeypatch, copies):
@@ -637,7 +640,7 @@ def test_card_before_and_after_play_the_selected_song(app, monkeypatch, copies):
     assert "wavmasta_after_" in app.played[-1] and "Hum Song" in status(app)
     assert page(app).table.playing == (1, "after")
     assert card.hear["after"].cget("text") == "Stop"
-    assert page(app).table.rows[1]["after"].cget("text") == "Stop"  # the row agrees
+    assert page(app).table.rows[1]["status"].cget("text") == "▶  playing after"  # the list shows which song
     # the settings lock, but Before/After/Stop on the card keep working
     assert all(s.cget("state") == "disabled" for s in card.sliders)
     assert "disabled" not in card.hear["before"].state()
@@ -658,11 +661,12 @@ def test_card_before_and_after_play_the_selected_song(app, monkeypatch, copies):
     assert card.hear_text.get() == "✓ you've heard these settings"
 
 
-def test_row_playback_shows_on_the_card_too(app, monkeypatch, copies):
+def test_songs_list_has_no_play_buttons(app, monkeypatch, copies):
     add(app, monkeypatch, [copies["clean"]])
-    page(app)._play(0, "after")
-    wait(app)
-    assert page(app).card.hear["after"].cget("text") == "Stop"
+    row = page(app).table.rows[0]
+    assert "before" not in row and "after" not in row
+    buttons = [w.cget("text") for w in row["frame"].winfo_children() if isinstance(w, ttk.Button)]
+    assert buttons == ["Remove"]
 
 
 def test_mastering_alone_is_not_listening(app, monkeypatch, copies):

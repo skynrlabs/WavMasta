@@ -73,7 +73,7 @@ class MasterPage(ttk.Frame):
         self.album_check = ttk.Checkbutton(c.top, text="Album mode", variable=self.album_var, style="Card.TCheckbutton")
         self.album_check.pack(side="right", padx=(0, 14))
         self.album_var.trace_add("write", lambda *_: self._album_changed())
-        self.table = TracksTable(c, fonts, on_select=self.select, on_play=self._play, on_remove=self.remove)
+        self.table = TracksTable(c, fonts, on_select=self.select, on_remove=self.remove)
         self.table.grid(row=1, column=0, columnspan=3, sticky="ew")
 
     def add_files(self):
@@ -127,7 +127,7 @@ class MasterPage(ttk.Frame):
         self.on_change()
 
     def _play(self, index, which):
-        """A row's Before/After button: plays that version, or stops it if it's the one playing."""
+        """Before/After: plays that version of a song, or stops it if it's the one playing."""
         if self.table.playing == (index, which):
             self.on_stop()
             return
@@ -135,7 +135,7 @@ class MasterPage(ttk.Frame):
         self.on_play(which)
 
     def _play_selected(self, which):
-        """The sound card's Before/After: the same as the selected song's row buttons."""
+        """The sound card's Before/After: plays (or stops) the selected song."""
         if self.selected is not None:
             self._play(self.selected, which)
 
@@ -239,7 +239,7 @@ class MasterPage(ttk.Frame):
         """Working locks everything. Listening locks the sound settings (so what you hear always matches
         what they show) but leaves Before, After and Stop working."""
         locked = self.busy or self.playing
-        self.table.set_enabled(not locked, keep_listening=self.playing and not self.busy)
+        self.table.set_enabled(not locked)
         note = "locked while playing · press Stop or Esc to change" if self.playing and not self.busy else ""
         self.card.set_enabled(not locked, note, listening=self.playing and not self.busy)
         for b in (self.add_btn, self.clear_btn, self.album_check):

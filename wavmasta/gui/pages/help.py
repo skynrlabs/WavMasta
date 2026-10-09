@@ -27,11 +27,11 @@ HELP_TEXT = [
     ),
     (
         "p",
-        "4.  Press After to hear the master, Before to hear the original: on the song's row, or under Hear at "
-        "the bottom of the Mastering settings, right where you change them. Both play the loudest 20 seconds, "
-        "at the same loudness, so you hear the difference in sound, not just volume. Esc stops. Change a "
-        "setting and the card tells you to press After again. The Waveform "
-        "card then draws the master over the original, with the stretch you heard shaded.",
+        "4.  Click a song, then press After (under Hear, at the bottom of the Mastering settings) to hear the "
+        "master and Before to hear the original, right where you change the settings. Both play the loudest "
+        "20 seconds, at the same loudness, so you hear the difference in sound, not just volume. Esc stops. "
+        "Change a setting and the card tells you to press After again. The Waveform card then draws the "
+        "master over the original, with the stretch you heard shaded.",
     ),
     (
         "p",

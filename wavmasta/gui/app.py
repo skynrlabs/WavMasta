@@ -295,7 +295,7 @@ class WavMastaApp:
     def blocked_by_playback(self):
         """True (and says why) if a change is attempted while Before/After is playing."""
         if self.master_page.playing:
-            self.say("Stop playback first", "warn", "Press Stop on the song, or Esc, then change its sound")
+            self.say("Stop playback first", "warn", "Press Stop under Hear, or Esc, then change its sound")
             return True
         return False
 

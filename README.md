@@ -100,7 +100,7 @@ Everything happens on the **Master** page, top to bottom:
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
 3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
-4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. They're on each song's row and under **Hear** at the bottom of the sound card, right below the settings, so you can tweak, listen and tweak again. Change a setting and the card tells you to press **After** again. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
+4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. They're under **Hear** at the bottom of the sound card, right below the settings, so you can tweak, listen and tweak again; the song you're hearing says *▶ playing after* in the list. Change a setting and the card tells you to press **After** again. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
 **History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, what cleanup removed, trimming and the ending. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
@@ -225,7 +225,7 @@ wavmasta/
     ├── journeys.py      Check, Before/After and Master workflows
     ├── pages/           Master, History, Settings and Help pages
     ├── model.py         Each song's own sound settings and status
-    ├── tracks_table.py  The songs list: a row per song with Before, After and status
+    ├── tracks_table.py  The songs list: a row per song with its status
     ├── sound_card.py    The selected song's sound card
     ├── waveform.py      The before/after waveform card
     ├── sidebar.py       Left-hand navigation

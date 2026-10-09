@@ -133,7 +133,7 @@ class SoundCard(ttk.Frame):
         self.trim_check = ttk.Checkbutton(f, text="Trim silence from the start and end", variable=self.trim_var)
         self.trim_check.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
-        # hear the change right here: the same Before/After as the song's row in the list
+        # hear the change right here, under the settings you just changed
         ttk.Separator(f).grid(row=10, column=0, columnspan=2, sticky="ew", pady=(10, 8))
         self._label(f, 11, "Hear")
         hear = ttk.Frame(f, style="Inner.TFrame")

@@ -1,7 +1,7 @@
 """The bar along the bottom of every page: where files go, Open folder and Master.
 
-Before and After live on each song's row (and turn into Stop while playing), so it's always
-clear which song and which version you're hearing. Esc also stops playback.
+Before and After live on the sound card, under the settings (and turn into Stop while playing);
+the song being heard says so in the songs list. Esc also stops playback.
 """
 
 import tkinter as tk

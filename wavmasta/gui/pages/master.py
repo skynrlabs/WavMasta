@@ -52,6 +52,7 @@ class MasterPage(ttk.Frame):
             on_analyze=on_analyze,
             on_suggest=on_suggest,
             on_change=self.refresh_staleness,
+            on_play=self._play_selected,
         )
         self.card.grid(row=2, column=0, sticky="nsew", pady=(0, 12))
         self.rowconfigure(3, weight=1)
@@ -133,11 +134,18 @@ class MasterPage(ttk.Frame):
         self.select(index)
         self.on_play(which)
 
+    def _play_selected(self, which):
+        """The sound card's Before/After: the same as the selected song's row buttons."""
+        if self.selected is not None:
+            self._play(self.selected, which)
+
     def set_playing(self, track, which=None):
         if track in self.tracks and which:
             self.table.set_playing((self.tracks.index(track), which))
         else:
             self.table.set_playing(None)
+        p = self.table.playing
+        self.card.set_playing(p[1] if p and p[0] == self.selected else None)
         playing = self.table.playing is not None
         if playing != self.playing:
             self.playing = playing
@@ -233,7 +241,7 @@ class MasterPage(ttk.Frame):
         locked = self.busy or self.playing
         self.table.set_enabled(not locked, keep_listening=self.playing and not self.busy)
         note = "locked while playing · press Stop or Esc to change" if self.playing and not self.busy else ""
-        self.card.set_enabled(not locked, note)
+        self.card.set_enabled(not locked, note, listening=self.playing and not self.busy)
         for b in (self.add_btn, self.clear_btn, self.album_check):
             b.state(["!disabled"] if not locked else ["disabled"])
 

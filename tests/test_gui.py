@@ -624,3 +624,57 @@ def test_waveform_clears_with_the_songs(app, monkeypatch, copies):
     page(app).clear_tracks()
     app.root.update()
     assert page(app).wave.data is None
+
+
+# ---- Before/After on the sound card
+def test_card_before_and_after_play_the_selected_song(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    page(app).select(1)
+    card = page(app).card
+    assert card.hear_text.get() == "hear what these settings do"
+    card.hear["after"].invoke()
+    wait(app)
+    assert "wavmasta_after_" in app.played[-1] and "Hum Song" in status(app)
+    assert page(app).table.playing == (1, "after")
+    assert card.hear["after"].cget("text") == "Stop"
+    assert page(app).table.rows[1]["after"].cget("text") == "Stop"  # the row agrees
+    # the settings lock, but Before/After/Stop on the card keep working
+    assert all(s.cget("state") == "disabled" for s in card.sliders)
+    assert "disabled" not in card.hear["before"].state()
+    card.hear["before"].invoke()
+    wait(app)
+    assert page(app).table.playing == (1, "before") and card.hear["before"].cget("text") == "Stop"
+    card.hear["before"].invoke()  # Stop
+    assert page(app).table.playing is None and card.hear["before"].cget("text") == "Before"
+    assert card.hear_text.get() == "✓ you've heard these settings"
+    # change a setting: the card says to listen again
+    card.glue_var.set(60)
+    card._store()
+    app.root.update()
+    assert card.hear_text.get() == "settings changed · press After to hear them"
+    card.hear["after"].invoke()
+    wait(app)
+    card.hear["after"].invoke()
+    assert card.hear_text.get() == "✓ you've heard these settings"
+
+
+def test_row_playback_shows_on_the_card_too(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app)._play(0, "after")
+    wait(app)
+    assert page(app).card.hear["after"].cget("text") == "Stop"
+
+
+def test_mastering_alone_is_not_listening(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    app.masterer.start()
+    wait(app)
+    assert page(app).card.hear_text.get() == "hear what these settings do"
+
+
+def test_card_hear_buttons_lock_while_working(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    app.masterer.start()
+    assert "disabled" in page(app).card.hear["after"].state()
+    wait(app)
+    assert "disabled" not in page(app).card.hear["after"].state()

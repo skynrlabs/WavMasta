@@ -1,7 +1,8 @@
 """The '<song> sound' card: how the song selected in the list will be mastered.
 
-Left: the mastering itself (tone, loudness, glue, width, or matching a reference song) and the
-song's ending (fade-out, trimming silence).
+Left: the mastering itself (tone, loudness, glue, width, or matching a reference song), the
+song's ending (fade-out, trimming silence), and Before/After, so you can hear each change
+without going back up to the songs list.
 Right: cleanup (noise, harsh highs, sharp 's' sounds, hum and whine), plus Check this song, which
 measures the song and suggests settings.
 """
@@ -39,9 +40,10 @@ def width_word(v):
 
 
 class SoundCard(ttk.Frame):
-    def __init__(self, parent, fonts, on_apply_all, on_analyze, on_suggest, on_change=None):
+    def __init__(self, parent, fonts, on_apply_all, on_analyze, on_suggest, on_change=None, on_play=None):
         super().__init__(parent, style="Card.TFrame", padding=(16, 12))
         self.track = None
+        self.on_play = on_play  # called with "before" or "after" (plays it, or stops it if it's playing)
         self.on_change = on_change
         self._loading = False
         self.locked = False
@@ -130,6 +132,21 @@ class SoundCard(ttk.Frame):
         self.trim_var.trace_add("write", lambda *_: self._store())
         self.trim_check = ttk.Checkbutton(f, text="Trim silence from the start and end", variable=self.trim_var)
         self.trim_check.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+
+        # hear the change right here: the same Before/After as the song's row in the list
+        ttk.Separator(f).grid(row=10, column=0, columnspan=2, sticky="ew", pady=(10, 8))
+        self._label(f, 11, "Hear")
+        hear = ttk.Frame(f, style="Inner.TFrame")
+        hear.grid(row=11, column=1, sticky="w")
+        self.hear = {}
+        for which in ("before", "after"):
+            b = ttk.Button(hear, text=which.capitalize(), style="Small.TButton", width=8,
+                           command=lambda w=which: self.on_play and self.on_play(w))  # fmt: skip
+            b.pack(side="left", padx=(0, 6))
+            self.hear[which] = b
+        self.hear_text = tk.StringVar()
+        self.hear_label = ttk.Label(f, textvariable=self.hear_text, style="Muted.TLabel")
+        self.hear_label.grid(row=12, column=1, sticky="w")
 
     # ---- right: cleanup and checking
     def _build_cleanup(self, f, fonts, on_analyze, on_suggest):
@@ -327,10 +344,30 @@ class SoundCard(ttk.Frame):
             self.hint.set("click another song to change its sound" if getattr(self, "count", 0) > 1 else "")
         self.hint_label.configure(style="Lock.TLabel" if self.locked and self.lock_note else "Muted.TLabel")
 
-    def set_enabled(self, on, note=""):
-        """Lock or unlock every control on the card. note: shown beside the title while locked."""
+    # ---- Before / After on the card
+    def set_playing(self, which):
+        """The version being heard says Stop. which: 'before', 'after' or None."""
+        for w, b in self.hear.items():
+            b.configure(text="Stop" if w == which else w.capitalize())
+
+    def set_heard(self, state):
+        """The note under Before/After. state: 'new' (not heard yet), 'changed' (settings changed
+        since you last listened) or 'current' (what you heard matches the settings)."""
+        text, style = {
+            "new": ("hear what these settings do", "Muted.TLabel"),
+            "changed": ("settings changed · press After to hear them", "Lock.TLabel"),
+            "current": ("✓ you've heard these settings", "Muted.TLabel"),
+        }.get(state, ("", "Muted.TLabel"))
+        self.hear_text.set(text)
+        self.hear_label.configure(style=style)
+
+    def set_enabled(self, on, note="", listening=False):
+        """Lock or unlock every control on the card. note: shown beside the title while locked.
+        listening: locked because a version is playing, so Before/After/Stop keep working."""
         self.locked = not on
         self.lock_note = note if not on else ""
+        for b in self.hear.values():
+            b.state(["!disabled"] if on or listening else ["disabled"])
         for b in (
             self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check,
             self.trim_check,

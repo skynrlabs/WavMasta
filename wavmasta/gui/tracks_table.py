@@ -83,7 +83,7 @@ class TracksTable(ttk.Frame):
         else:
             self.empty.place(relx=0.5, rely=0.5, anchor="center")
         self.select(selected)
-        self.set_enabled(self.enabled)
+        self.set_enabled(self.enabled, getattr(self, "keep_listening", False))
         p = self.playing
         self.set_playing(p if p is not None and p[0] < n else None)
 
@@ -110,7 +110,7 @@ class TracksTable(ttk.Frame):
         remove.grid(row=0, column=4, sticky="e", padx=(0, 8))
         row = {"frame": frame, "name": name, "status": status, "before": before, "after": after, "remove": remove}
         for w in (frame, name, status):
-            w.bind("<Button-1>", lambda e: self.on_select(i))
+            w.bind("<Button-1>", lambda e: self.on_select(i) if self.enabled else None)
             w.bind("<MouseWheel>", self._wheel)
             w.bind("<Button-4>", self._wheel)
             w.bind("<Button-5>", self._wheel)
@@ -134,11 +134,14 @@ class TracksTable(ttk.Frame):
     def _paint_status(self, row, track):
         row["status"].configure(text=track.status, fg=T[STATUS_COLORS.get(track.status_kind, "muted")])
 
-    def set_enabled(self, on):
+    def set_enabled(self, on, keep_listening=False):
+        """on=False locks the rows. keep_listening leaves Before/After/Stop working (used while playing)."""
         self.enabled = on
         for row in self.rows:
-            for key in ("before", "after", "remove"):
-                row[key].state(["!disabled"] if on else ["disabled"])
+            row["remove"].state(["!disabled"] if on else ["disabled"])
+            for key in ("before", "after"):
+                row[key].state(["!disabled"] if on or keep_listening else ["disabled"])
+        self.keep_listening = keep_listening
 
     def set_playing(self, playing):
         """The button being heard says Stop. playing: (row index, 'before' or 'after') or None."""

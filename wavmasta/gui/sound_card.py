@@ -35,6 +35,9 @@ class SoundCard(ttk.Frame):
         self.track = None
         self.on_change = on_change
         self._loading = False
+        self.locked = False
+        self.lock_note = ""
+        self.sliders = []
         self.columnconfigure(0, weight=1)
 
         top = title_row(self, "Sound", upper=False)
@@ -42,7 +45,8 @@ class SoundCard(ttk.Frame):
         self.title = tk.StringVar(value="Sound")
         top.label.configure(textvariable=self.title)
         self.hint = tk.StringVar()
-        ttk.Label(top, textvariable=self.hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
+        self.hint_label = ttk.Label(top, textvariable=self.hint, style="Muted.TLabel")
+        self.hint_label.pack(side="left", padx=(10, 0))
         self.apply_btn = ttk.Button(top, text="Apply to all songs", style="Small.TButton", command=on_apply_all)
         self.apply_btn.pack(side="right")
 
@@ -71,7 +75,9 @@ class SoundCard(ttk.Frame):
         self._label(parent, r, label)
         f = ttk.Frame(parent, style="Inner.TFrame")
         f.grid(row=r, column=1, sticky="w")
-        slider(f, var, lo, hi, step, on_move, length=SLIDER).pack(side="left")
+        s = slider(f, var, lo, hi, step, on_move, length=SLIDER)
+        s.pack(side="left")
+        self.sliders.append(s)
         ttk.Label(f, textvariable=text_var, style="Value.TLabel").pack(side="left", padx=(10, 0))
 
     # ---- left: mastering
@@ -120,9 +126,8 @@ class SoundCard(ttk.Frame):
         self._slider_row(f, 2, "Tame harsh highs", self.top_var, 0, 6, 0.5, self.top_text, lambda v: self._store())
         self.hum_var = tk.BooleanVar(value=True)
         self.hum_var.trace_add("write", lambda *_: self._store())
-        ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var).grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(4, 6)
-        )
+        self.hum_check = ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var)
+        self.hum_check.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 6))
         btns = ttk.Frame(f, style="Inner.TFrame")
         btns.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 4))
         self.check_btn = ttk.Button(btns, text="Check this song", style="Small.TButton", command=on_analyze)
@@ -154,7 +159,8 @@ class SoundCard(ttk.Frame):
         self.empty.grid_remove()
         self.body.grid()
         self.title.set(f"{track.name}")
-        self.hint.set("click another song to change its sound" if count > 1 else "")
+        self.count = count
+        self._show_hint()
         if count > 1:
             self.apply_btn.pack(side="right")
         else:
@@ -190,7 +196,7 @@ class SoundCard(ttk.Frame):
         matched = bool(t.reference)
         self.tone_hint.set("matched to the reference" if matched else TONE_HINTS.get(t.tone, ""))
         for box in (self.tone_box, self.loud_box):
-            box.state(["disabled"] if matched else ["!disabled", "readonly"])
+            box.state(["disabled"] if matched or self.locked else ["!disabled", "readonly"])
         self.glue_text.set(f"{t.glue}% · {glue_word(t.glue)}")
         self.width_text.set(f"{t.width}% · {width_word(t.width)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
@@ -239,6 +245,30 @@ class SoundCard(ttk.Frame):
             if self.on_change:
                 self.on_change()
 
-    def set_enabled(self, on):
-        for b in (self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear):
+    def _show_hint(self):
+        if self.track is None:
+            return
+        if self.locked and self.lock_note:
+            self.hint.set(self.lock_note)
+        else:
+            self.hint.set("click another song to change its sound" if getattr(self, "count", 0) > 1 else "")
+        self.hint_label.configure(style="Lock.TLabel" if self.locked and self.lock_note else "Muted.TLabel")
+
+    def set_enabled(self, on, note=""):
+        """Lock or unlock every control on the card. note: shown beside the title while locked."""
+        self.locked = not on
+        self.lock_note = note if not on else ""
+        for b in (self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check):
             b.state(["!disabled"] if on else ["disabled"])
+        for s in self.sliders:
+            s.configure(
+                state="normal" if on else "disabled",
+                bg=T["accent"] if on else T["line_hover"],
+                cursor="" if on else "arrow",
+            )
+        if self.track is not None:
+            self._refresh_texts()  # restores the tone and loudness boxes (they stay off with a reference)
+        else:
+            for box in (self.tone_box, self.loud_box):
+                box.state(["!disabled", "readonly"] if on else ["disabled"])
+        self._show_hint()

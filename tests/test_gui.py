@@ -335,3 +335,64 @@ def test_shortcuts(app, monkeypatch, copies):
     app.root.event_generate("<Control-Key-3>")
     app.root.update()
     assert app.page_title.get() == "Settings"
+
+
+# ---- listening locks the sound settings
+def test_playing_locks_the_sound_until_stopped(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    page(app)._play(0, "after")
+    wait(app)
+    card, row = page(app).card, page(app).table.rows[0]
+    # sound settings, adding/removing songs and Master are locked
+    assert all(s.cget("state") == "disabled" for s in card.sliders)
+    for w in (card.tone_box, card.loud_box, card.check_btn, card.ref_btn, card.hum_check, card.apply_btn):
+        assert "disabled" in w.state()
+    assert "disabled" in page(app).add_btn.state() and "disabled" in row["remove"].state()
+    assert "disabled" in app.action.master_btn.state()
+    assert "Stop" in card.hint.get()
+    # ...but Before, After and Stop still work, on every row
+    for r in page(app).table.rows:
+        assert "disabled" not in r["before"].state() and "disabled" not in r["after"].state()
+    # clicking another song's name doesn't move the card away from what's playing
+    page(app).table.rows[1]["name"].event_generate("<Button-1>")
+    app.root.update()
+    assert page(app).selected == 0
+    # shortcuts that change things say why they're waiting
+    app.root.event_generate("<Control-Return>")
+    app.root.update()
+    assert status(app) == "Stop playback first"
+    # Stop unlocks everything
+    page(app)._play(0, "after")
+    assert all(s.cget("state") == "normal" for s in card.sliders)
+    assert "disabled" not in card.tone_box.state() and "disabled" not in app.action.master_btn.state()
+    assert "disabled" not in row["remove"].state()
+    assert "Stop" not in card.hint.get()
+
+
+def test_switching_before_and_after_stays_locked(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app)._play(0, "after")
+    wait(app)
+    page(app)._play(0, "before")
+    wait(app)
+    assert page(app).table.playing == (0, "before")
+    assert "disabled" in page(app).card.tone_box.state()
+
+
+def test_playback_ending_by_itself_unlocks(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app)._play(0, "after")
+    wait(app)
+    app.preview._ended(app.preview.token)
+    assert page(app).table.playing is None
+    assert all(s.cget("state") == "normal" for s in page(app).card.sliders)
+
+
+def test_reference_keeps_tone_off_after_unlock(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app).tracks[0].reference = copies["hum"]
+    page(app).card.show(page(app).tracks[0], 1)
+    page(app)._play(0, "after")
+    wait(app)
+    page(app)._play(0, "after")  # stop
+    assert "disabled" in page(app).card.tone_box.state()  # still off: the reference sets the tone

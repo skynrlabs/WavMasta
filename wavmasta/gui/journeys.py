@@ -184,7 +184,9 @@ class PreviewJourney:
         if which == "before":
             app.say(f"Before: {track.name}", "muted", f"The original from {when}, at the same loudness as After")
         else:
-            app.say(f"After: {track.name}", "ok", f"The master from {when}. Happy with it? Master to save it")
+            app.say(
+                f"After: {track.name}", "ok", f"The master from {when}. Happy with it? Stop, then Master to save it"
+            )
         app.master_page.set_playing(track, which)
         self.token = token = object()
         app.root.after(int(seconds * 1000) + 300, lambda: self._ended(token))

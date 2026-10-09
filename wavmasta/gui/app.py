@@ -43,6 +43,7 @@ class WavMastaApp:
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
 
+        self.master_page.on_lock = self._on_listening
         self.master_page.refresh()
         self.area.skip = [self.master_page.table]  # the songs list scrolls by itself
         for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
@@ -118,6 +119,8 @@ class WavMastaApp:
 
     def _on_drop(self, event):
         self.master_page.table.set_drop_highlight(False)
+        if self.busy or self.blocked_by_playback():
+            return event.action
         paths = self.root.tk.splitlist(event.data)
         added = self.master_page.add_paths(paths)
         self.show_page("master")
@@ -223,8 +226,22 @@ class WavMastaApp:
 
     def set_busy(self, on):
         self.busy = on
-        self.action.master_btn.state(["disabled"] if on else ["!disabled"])
         self.master_page.set_enabled(not on)
+        self._update_master_btn()
+
+    def _on_listening(self, playing):
+        self._update_master_btn()
+
+    def _update_master_btn(self):
+        locked = self.busy or self.master_page.playing
+        self.action.master_btn.state(["disabled"] if locked else ["!disabled"])
+
+    def blocked_by_playback(self):
+        """True (and says why) if a change is attempted while Before/After is playing."""
+        if self.master_page.playing:
+            self.say("Stop playback first", "warn", "Press Stop on the song, or Esc, then change its sound")
+            return True
+        return False
 
     def _poll(self):
         try:
@@ -236,6 +253,8 @@ class WavMastaApp:
 
     # ---- commands
     def use_suggestions(self):
+        if self.blocked_by_playback():
+            return
         track = self.master_page.selected_track()
         if track is None or track.report is None:
             return
@@ -267,6 +286,8 @@ class WavMastaApp:
             subprocess.Popen(["xdg-open", d])
 
     def reset_settings(self):
+        if self.blocked_by_playback():
+            return
         self.settings_page.reset()
         self.master_page.reset()
         self.say("Settings reset to defaults", "ok")

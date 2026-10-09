@@ -682,3 +682,63 @@ def test_card_hear_buttons_lock_while_working(app, monkeypatch, copies):
     assert "disabled" in page(app).card.hear["after"].state()
     wait(app)
     assert "disabled" not in page(app).card.hear["after"].state()
+
+
+def test_song_names_never_touch_their_status(app, monkeypatch, copies, tmp_path):
+    names = [
+        "01 Midnight Highway.wav",
+        "02 Back Roads Home.wav",
+        "03 Gravel & Gold.wav",
+        "04 Last Light Over the Lake.wav",
+    ]
+    paths = [str(shutil.copy(copies["clean"], tmp_path / n)) for n in names]
+    add(app, monkeypatch, paths)
+    app.root.update()
+    gap = 8  # at least this many pixels between a name and its status
+    for r in page(app).table.rows:
+        name, status = r["name"], r["status"]
+        text_end = name.winfo_x() + page(app).table.name_font.measure(name.cget("text"))
+        assert text_end + gap <= status.winfo_x(), (name.cget("text"), text_end, status.winfo_x())
+
+
+def test_reference_hint_wraps_inside_its_column(app, monkeypatch, copies, tmp_path):
+    # four songs make the page scroll, and the scrollbar takes room from the columns
+    paths = [str(shutil.copy(copies["clean"], tmp_path / f"Song {i}.wav")) for i in range(4)]
+    add(app, monkeypatch, paths)
+    app.root.geometry("980x900")  # a narrower window squeezes the column further
+    for _ in range(5):
+        app.root.update()
+    card = page(app).card
+    hint = next(w for w in card.body.winfo_children()[0].grid_slaves(row=7, column=1))
+    column = hint.master
+    assert hint.winfo_x() + hint.winfo_reqwidth() <= column.winfo_width()
+
+
+def test_history_result_column_keeps_the_readings_whole(app, monkeypatch, copies):
+    # Check's findings say "worth fixing" in Result (the full line is in Details), so the column
+    # stays narrow and the master's readings and the album spread fit without '…'
+    add(app, monkeypatch, [copies["messy"], copies["hum"]])
+    app.checker.start()
+    wait(app)
+    page(app).album_var.set(True)
+    app.masterer.start()
+    wait(app, 240)
+    app.show_page("history")
+    app.root.update()
+    log = app.activity
+    log._fit_columns()
+    feed = log.as_text()
+    assert "Messy Song.wav | worth fixing | Hiss" in feed
+    tree = log.tree
+    shortened = []
+
+    def walk(item):
+        full, values = log._full(item)
+        if values and values[1] and tree.item(item, "values")[1] != values[1]:
+            shortened.append(values[1])
+        for child in tree.get_children(item):
+            walk(child)
+
+    for item in tree.get_children():
+        walk(item)
+    assert shortened == [], (log._widths, tree.winfo_width())

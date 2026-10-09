@@ -158,7 +158,16 @@ class CheckJourney:
         feed = app.activity
         feed.action(f"Check {track.name}", report.summary())
         for line in findings:
-            feed.song(track.name, line.split(".")[0], line)
+            feed.song(track.name, check_verdict(line), line)
+
+
+def check_verdict(finding):
+    """A finding in a word or two for History's Result column (the full line goes in Details)."""
+    if finding.startswith("No noise problems"):
+        return "clean ✓"
+    if finding.startswith("Clipping"):
+        return "can't be fixed"
+    return "worth fixing"
 
 
 class PreviewJourney:

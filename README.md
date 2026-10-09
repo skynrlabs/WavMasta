@@ -40,7 +40,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 🔍 **Check this song**: measures loudness and true peak, and finds hiss, hum, whine, harsh highs and clipping, with suggested fixes
 - 🧹 **Noise reduction**: a gentle de-hisser that works where hiss lives (above 1 kHz) and never touches the bass or the body of the mix
 - 🔌 **Hum and whine removal**: finds tones that sit there the whole song (50/60 Hz hum, a whine, ringing) and notches them out with very narrow filters, while the notes in your music are left alone
-- ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs
+- ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs; **Check** works out how many dB your song needs
 - 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
 - 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
 - 🧲 **Glue and width**: bus compression to hold the mix together, and stereo width that keeps bass and kick centred

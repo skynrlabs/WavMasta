@@ -11,6 +11,10 @@ from scipy.ndimage import median_filter
 from scipy.signal import stft, welch
 
 SILENCE_DB = -70.0  # frames quieter than this are digital silence (gaps, fades), not noise
+FIZZY_DB = -12.0  # top-end ratio above this sounds fizzy; around -20 is typical
+NATURAL_TOP_DB = -14.0  # where Tame harsh highs aims to bring a fizzy song
+SHELF_EFFECT = 0.9  # each dB of Tame harsh highs lowers the top-end ratio by about this much (measured)
+MAX_TAME_DB = 6.0  # the slider's range
 
 
 def _k_filter(sr):
@@ -274,7 +278,16 @@ class Report:
 
     @property
     def fizzy(self):
-        return not np.isnan(self.top_end) and self.top_end > -12
+        return not np.isnan(self.top_end) and self.top_end > FIZZY_DB
+
+    @property
+    def tame_amount(self):
+        """How much Tame harsh highs (dB) brings this song's top end back to a natural level,
+        in the slider's 0.5 dB steps; 0 if it isn't fizzy."""
+        if not self.fizzy:
+            return 0.0
+        cut = (self.top_end - NATURAL_TOP_DB) / SHELF_EFFECT
+        return float(min(MAX_TAME_DB, max(1.0, round(cut * 2) / 2)))
 
     def findings(self):
         """Plain-English lines about what was found, most important first."""
@@ -292,7 +305,9 @@ class Report:
                 f"{what} at {f:,.0f} Hz ({ex:.0f} dB above its surroundings). Remove hum and whine will notch it out."
             )
         if self.fizzy:
-            out.append("Fizzy, harsh top end. Try Tame harsh highs.")
+            n = self.tame_amount
+            most = " (its strongest setting)" if n >= MAX_TAME_DB else ""
+            out.append(f"Fizzy, harsh top end. Try Tame harsh highs at -{n:g} dB{most}.")
         if not out:
             out.append("No noise problems found. Pick a tone and loudness and master it.")
         return out
@@ -302,10 +317,8 @@ class Report:
         s = {"denoise": 40 if self.hiss else 0}
         if self.tones:  # only ever turn it on: with no steady tone found it does nothing anyway
             s["fix_tones"] = True
-        if self.fizzy:
-            s["tame_top"] = 3.0 if self.top_end > -8 else 1.5
-        else:
-            s["tame_top"] = 0.0
+        if self.fizzy:  # only ever suggested when it's needed; a setting you chose yourself is left alone
+            s["tame_top"] = self.tame_amount
         return s
 
     def summary(self):

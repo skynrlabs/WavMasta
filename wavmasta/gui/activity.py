@@ -91,7 +91,9 @@ def master_report(result, settings, fmt, ceiling):
     if settings.tame_top:
         rows.append(("Harsh highs", f"softened -{settings.tame_top:g} dB", "above 11 kHz", True))
     elif before.fizzy:
-        rows.append(("Harsh highs", "found, not softened", "try Tame harsh highs", False))
+        rows.append(
+            ("Harsh highs", "found, not softened", f"try Tame harsh highs at -{before.tame_amount:g} dB", False)
+        )
     # sound and file
     tone = f"matched to {os.path.basename(settings.reference)}" if settings.reference else settings.tone
     extra = f"glue {settings.glue}% · width {settings.width}%"

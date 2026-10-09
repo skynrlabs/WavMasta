@@ -1,0 +1,73 @@
+name: Bug report
+description: Something doesn't work, crashes or shows an error.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. If the problem is how a master **sounds** (too loud, dull, distorted), use the **Sound problem** form instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, including any error message (a screenshot helps).
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you clicked, in order, so it can be made to happen again.
+      placeholder: |
+        1. Added a 24-bit WAV
+        2. Clicked Check this song
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+  - type: input
+    id: version
+    attributes:
+      label: WavMasta version
+      description: Shown at the bottom of the sidebar, or in Help → About.
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Windows installer (itch.io)
+        - pipx
+        - From source
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11, macOS 15, Ubuntu 24.04..."
+    validations:
+      required: true
+  - type: input
+    id: song
+    attributes:
+      label: The song file
+      description: Format, and if you know them, sample rate, bit depth and length.
+      placeholder: "WAV, 48 kHz, 24-bit, 3:45"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Settings you changed, whether it happens with every song, screenshots.
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before you send
+      options:
+        - label: I searched the existing issues and this hasn't been reported yet.
+          required: true

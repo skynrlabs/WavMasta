@@ -1,0 +1,48 @@
+name: Sound problem
+description: The master sounds wrong, such as distorted, dull, watery, too quiet or too loud.
+labels: ["sound"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mastering polishes a mix; it can't fix every mix problem. The **Troubleshooting** table in the README covers the most common ones. If that doesn't help, the details below make it possible to work out what happened.
+  - type: textarea
+    id: sound
+    attributes:
+      label: What does it sound like?
+      description: What's wrong, and where in the song (a time like 1:20 helps).
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: The master's report from History
+      description: On the **History** page, open the song under its Master action and copy the rows (Clipping, True peak, Loudness, and so on).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings you used
+      description: Tone, Loudness, Glue, Stereo width, Fade-out, Noise reduction, Tame harsh highs, De-ess, hum removal, and whether Album mode or a Reference was on.
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: What Check this song said
+      description: The Check results for the original, if you ran it.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: WavMasta version
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: clip
+    attributes:
+      label: A short clip (optional)
+      description: If you're happy to share it, attach or link 10 to 20 seconds of the original and the master. It's the fastest way to find the cause.

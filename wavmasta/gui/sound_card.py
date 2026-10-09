@@ -12,7 +12,7 @@ from tkinter import filedialog, ttk
 from ..config import AUDIO_EXTENSIONS, LOUDNESS, TONE_HINTS, TONES
 from .theme import THEME as T
 from .theme import px
-from .widgets import slider, title_row
+from .widgets import Bubble, slider, title_row
 
 SLIDER = 140
 
@@ -35,6 +35,9 @@ class SoundCard(ttk.Frame):
         self.track = None
         self.on_change = on_change
         self._loading = False
+        self.locked = False
+        self.lock_note = ""
+        self.sliders = []
         self.columnconfigure(0, weight=1)
 
         top = title_row(self, "Sound", upper=False)
@@ -42,7 +45,8 @@ class SoundCard(ttk.Frame):
         self.title = tk.StringVar(value="Sound")
         top.label.configure(textvariable=self.title)
         self.hint = tk.StringVar()
-        ttk.Label(top, textvariable=self.hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
+        self.hint_label = ttk.Label(top, textvariable=self.hint, style="Muted.TLabel")
+        self.hint_label.pack(side="left", padx=(10, 0))
         self.apply_btn = ttk.Button(top, text="Apply to all songs", style="Small.TButton", command=on_apply_all)
         self.apply_btn.pack(side="right")
 
@@ -71,7 +75,9 @@ class SoundCard(ttk.Frame):
         self._label(parent, r, label)
         f = ttk.Frame(parent, style="Inner.TFrame")
         f.grid(row=r, column=1, sticky="w")
-        slider(f, var, lo, hi, step, on_move, length=SLIDER).pack(side="left")
+        s = slider(f, var, lo, hi, step, on_move, length=SLIDER)
+        s.pack(side="left")
+        self.sliders.append(s)
         ttk.Label(f, textvariable=text_var, style="Value.TLabel").pack(side="left", padx=(10, 0))
 
     # ---- left: mastering
@@ -120,25 +126,17 @@ class SoundCard(ttk.Frame):
         self._slider_row(f, 2, "Tame harsh highs", self.top_var, 0, 6, 0.5, self.top_text, lambda v: self._store())
         self.hum_var = tk.BooleanVar(value=True)
         self.hum_var.trace_add("write", lambda *_: self._store())
-        ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var).grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(4, 6)
-        )
+        self.hum_check = ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var)
+        self.hum_check.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 6))
         btns = ttk.Frame(f, style="Inner.TFrame")
         btns.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 4))
         self.check_btn = ttk.Button(btns, text="Check this song", style="Small.TButton", command=on_analyze)
         self.check_btn.pack(side="left")
-        self.suggest_btn = ttk.Button(btns, text="Use suggestions", style="Small.TButton", command=on_suggest)
-        self.findings = tk.Label(
-            f,
-            text="",
-            bg=T["card"],
-            fg=T["muted"],
-            font=fonts["small"],
-            justify="left",
-            anchor="nw",
-            wraplength=px(f, 370),
-        )
-        self.findings.grid(row=5, column=0, columnspan=2, sticky="nw")
+        self.suggest_btn = ttk.Button(btns, text="✦ Use suggestions", style="Pink.TButton", command=on_suggest)
+        # Check results: a rounded bubble under the buttons, one coloured line per finding
+        self.fonts = fonts
+        self.bubble = Bubble(f)
+        self.bubble.grid(row=5, column=0, columnspan=2, sticky="nw", pady=(6, 0))
 
     # ---- showing a song
     def show(self, track, count=0):
@@ -154,7 +152,8 @@ class SoundCard(ttk.Frame):
         self.empty.grid_remove()
         self.body.grid()
         self.title.set(f"{track.name}")
-        self.hint.set("click another song to change its sound" if count > 1 else "")
+        self.count = count
+        self._show_hint()
         if count > 1:
             self.apply_btn.pack(side="right")
         else:
@@ -172,16 +171,71 @@ class SoundCard(ttk.Frame):
         self.show_report(track.report)
 
     def show_report(self, report):
+        """Fill the Check results bubble: a heading with the song's loudness and peak, then a line per
+        finding with a coloured dot (red: can't be fixed, amber: worth fixing, green: all clear) and
+        the tip in violet."""
+        box = self.bubble.inner
+        for w in box.winfo_children():
+            w.destroy()
+        F, fill, wrap = self.fonts, self.bubble.fill, px(box, 330)
+        box.columnconfigure(0, weight=0)
+        box.columnconfigure(1, weight=1)  # a wide heading widens the text column, not the dots
         if report is None:
-            self.findings.configure(text="Check this song to measure it and find hiss, hum or harsh highs.")
+            tk.Label(box, text="✦", bg=fill, fg=T["accent_soft"], font=F["btn"]).grid(row=0, column=0, sticky="nw")
+            tk.Label(
+                box,
+                text="Check this song to measure it and find hiss, hum or harsh highs.",
+                bg=fill, fg=T["muted"], font=F["small"], justify="left", wraplength=wrap,
+            ).grid(row=0, column=1, sticky="w", padx=(8, 0))  # fmt: skip
             self.suggest_btn.pack_forget()
+            self.bubble._fit()
+            self.bubble.refit()
             return
-        lines = [f"Now: {report.summary()}"] + ["• " + line for line in report.findings()]
-        self.findings.configure(text="\n".join(lines))
+        head = tk.Frame(box, bg=fill)
+        head.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        tk.Label(head, text="CHECK RESULTS", bg=fill, fg=T["accent_soft"], font=F["small"]).pack(side="left")
+        tk.Label(head, text=f"  {report.lufs:.1f} LUFS", bg=fill, fg=T["text"], font=F["btn"]).pack(side="left")
+        tk.Label(head, text=f"  ·  peak {report.true_peak:.1f} dBTP", bg=fill, fg=T["text"], font=F["small"]).pack(
+            side="left"
+        )
+        for i, line in enumerate(report.findings(), start=1):
+            if line.startswith("No noise problems"):
+                color = T["ok"]
+            elif line.startswith("Clipping"):
+                color = T["bad"]
+            else:
+                color = T["warn"]
+            what, _, tip = line.partition(". ")
+            tk.Label(box, text="●", bg=fill, fg=color, font=F["small"]).grid(row=i, column=0, sticky="nw", pady=(1, 0))
+            cell = tk.Frame(box, bg=fill)
+            cell.grid(row=i, column=1, sticky="w", padx=(8, 0), pady=(0, 3))
+            tk.Label(
+                cell, text=what + ("." if tip else ""), bg=fill, fg=T["text"], font=F["small"], justify="left",
+                wraplength=wrap,
+            ).pack(anchor="w")  # fmt: skip
+            if tip:
+                tk.Label(
+                    cell, text=tip, bg=fill, fg=T["accent_soft"], font=F["small"], justify="left", wraplength=wrap
+                ).pack(anchor="w")
         if self.track is not None and any(getattr(self.track, k) != v for k, v in report.suggested().items()):
             self.suggest_btn.pack(side="left", padx=(8, 0))
         else:
             self.suggest_btn.pack_forget()
+        self.bubble._fit()
+        self.bubble.refit()
+
+    def findings_text(self):
+        """Everything the Check results bubble says, as plain text (for tests and copying)."""
+        out = []
+
+        def walk(w):
+            for c in w.winfo_children():
+                if isinstance(c, tk.Label) and c.cget("text") not in ("●", "✦"):
+                    out.append(c.cget("text"))
+                walk(c)
+
+        walk(self.bubble.inner)
+        return "\n".join(out)
 
     def _refresh_texts(self):
         t = self.track
@@ -190,7 +244,7 @@ class SoundCard(ttk.Frame):
         matched = bool(t.reference)
         self.tone_hint.set("matched to the reference" if matched else TONE_HINTS.get(t.tone, ""))
         for box in (self.tone_box, self.loud_box):
-            box.state(["disabled"] if matched else ["!disabled", "readonly"])
+            box.state(["disabled"] if matched or self.locked else ["!disabled", "readonly"])
         self.glue_text.set(f"{t.glue}% · {glue_word(t.glue)}")
         self.width_text.set(f"{t.width}% · {width_word(t.width)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
@@ -239,6 +293,30 @@ class SoundCard(ttk.Frame):
             if self.on_change:
                 self.on_change()
 
-    def set_enabled(self, on):
-        for b in (self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear):
+    def _show_hint(self):
+        if self.track is None:
+            return
+        if self.locked and self.lock_note:
+            self.hint.set(self.lock_note)
+        else:
+            self.hint.set("click another song to change its sound" if getattr(self, "count", 0) > 1 else "")
+        self.hint_label.configure(style="Lock.TLabel" if self.locked and self.lock_note else "Muted.TLabel")
+
+    def set_enabled(self, on, note=""):
+        """Lock or unlock every control on the card. note: shown beside the title while locked."""
+        self.locked = not on
+        self.lock_note = note if not on else ""
+        for b in (self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check):
             b.state(["!disabled"] if on else ["disabled"])
+        for s in self.sliders:
+            s.configure(
+                state="normal" if on else "disabled",
+                bg=T["accent"] if on else T["line_hover"],
+                cursor="" if on else "arrow",
+            )
+        if self.track is not None:
+            self._refresh_texts()  # restores the tone and loudness boxes (they stay off with a reference)
+        else:
+            for box in (self.tone_box, self.loud_box):
+                box.state(["!disabled", "readonly"] if on else ["disabled"])
+        self._show_hint()

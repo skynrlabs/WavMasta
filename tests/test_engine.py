@@ -175,3 +175,10 @@ def test_mono_files_become_stereo(tmp_path):
 def test_analyze_from_file_matches_memory(songs):
     x, sr = load(songs["whine"])
     assert [round(f) for f, _ in analyze(x, sr).tones] == [3150]
+
+
+def test_hum_and_its_harmonic_are_both_reduced():
+    h = synth.song(hum=0.006)
+    y, _ = master_audio(h, SR, Settings(glue=0), log=lambda m: None)
+    for f in (60, 120):
+        assert rel(y, f) < rel(h, f) - 10

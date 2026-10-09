@@ -54,7 +54,11 @@ HELP_TEXT = [
         "Noise reduction: lowers steady hiss and noise. 30-50% is usually enough. Above about 70% it can "
         "start to sound watery or swirly, so check with After.",
     ),
-    ("p", "Tame harsh highs: softens fizzy, brittle top end above 11 kHz, common in AI-generated songs."),
+    (
+        "p",
+        "Tame harsh highs: softens fizzy, brittle top end above 11 kHz, common in AI-generated songs. "
+        "Check works out how much your song needs (it aims for a natural top end) and Use suggestions sets it.",
+    ),
     (
         "p",
         "Remove steady hum and whine: finds tones that sit there for the whole song (mains hum at 50 or 60 Hz, "

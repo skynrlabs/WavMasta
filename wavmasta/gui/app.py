@@ -43,6 +43,7 @@ class WavMastaApp:
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
 
+        self.master_page.on_lock = self._on_listening
         self.master_page.refresh()
         self.area.skip = [self.master_page.table]  # the songs list scrolls by itself
         for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
@@ -70,14 +71,19 @@ class WavMastaApp:
         card = self.master_page.card
         card.empty.grid_remove()  # measure with a song's Sound card showing, as it is in use,
         card.body.grid()  # including a few lines of Check findings
-        card.findings.configure(text="\n".join(["Now: -20.0 LUFS · peak -4.0 dBTP"] + ["• finding"] * 5))
+        from types import SimpleNamespace
+
+        sample = "Steady whine at 3,150 Hz (50 dB above its surroundings). Remove hum and whine will notch it out."
+        card.show_report(  # a typical Check result, so the window is tall enough for it
+            SimpleNamespace(lufs=-20.0, true_peak=-4.0, findings=lambda: [sample] * 3, suggested=lambda: {})
+        )
         for _ in range(3):  # sizes settle from the inside out, one layout pass per level
             root.update_idletasks()
         # ask for the full height once (plus a little room for long findings)
         self.area.canvas.configure(height=self.area.needed_height() + px(root, 24))
         for _ in range(3):
             root.update_idletasks()
-        card.show(card.track)
+        card.show(card.track)  # back to the real (empty) card
         sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
         scale = float(root.tk.call("tk", "scaling")) / (96 / 72)  # 1.0 at 100% display scaling
         w = min(max(root.winfo_reqwidth(), int(1100 * scale)), sw - 40)
@@ -118,6 +124,8 @@ class WavMastaApp:
 
     def _on_drop(self, event):
         self.master_page.table.set_drop_highlight(False)
+        if self.busy or self.blocked_by_playback():
+            return event.action
         paths = self.root.tk.splitlist(event.data)
         added = self.master_page.add_paths(paths)
         self.show_page("master")
@@ -223,8 +231,22 @@ class WavMastaApp:
 
     def set_busy(self, on):
         self.busy = on
-        self.action.master_btn.state(["disabled"] if on else ["!disabled"])
         self.master_page.set_enabled(not on)
+        self._update_master_btn()
+
+    def _on_listening(self, playing):
+        self._update_master_btn()
+
+    def _update_master_btn(self):
+        locked = self.busy or self.master_page.playing
+        self.action.master_btn.state(["disabled"] if locked else ["!disabled"])
+
+    def blocked_by_playback(self):
+        """True (and says why) if a change is attempted while Before/After is playing."""
+        if self.master_page.playing:
+            self.say("Stop playback first", "warn", "Press Stop on the song, or Esc, then change its sound")
+            return True
+        return False
 
     def _poll(self):
         try:
@@ -236,6 +258,8 @@ class WavMastaApp:
 
     # ---- commands
     def use_suggestions(self):
+        if self.blocked_by_playback():
+            return
         track = self.master_page.selected_track()
         if track is None or track.report is None:
             return
@@ -267,6 +291,8 @@ class WavMastaApp:
             subprocess.Popen(["xdg-open", d])
 
     def reset_settings(self):
+        if self.blocked_by_playback():
+            return
         self.settings_page.reset()
         self.master_page.reset()
         self.say("Settings reset to defaults", "ok")

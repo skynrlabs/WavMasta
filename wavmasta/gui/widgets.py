@@ -75,10 +75,24 @@ class ScrollArea(ttk.Frame):
         self.inner.bind("<Configure>", lambda e: self._fit())
         self.scrolling = False
         self.page = None  # the page on screen; only its height matters
+        self._last_need = None
+        self._watch()
 
     def show(self, page):
         self.page = page
         self._fit()
+
+    def _watch(self):
+        """Pages grow and shrink (a song added, Check results shown); Tk doesn't announce that for a
+        page held at a fixed size, so look a few times a second and re-fit when it changes."""
+        try:
+            need = self.needed_height()
+            if need != self._last_need:
+                self._last_need = need
+                self._fit()
+            self.after(250, self._watch)
+        except tk.TclError:
+            pass  # the window was closed
 
     def needed_height(self):
         return (self.page or self.inner).winfo_reqheight()
@@ -88,12 +102,14 @@ class ScrollArea(ttk.Frame):
         need = self.needed_height()
         self.scrolling = need > h + 1
         height = need if self.scrolling else h
-        self.canvas.itemconfigure(self._win, width=max(1, w), height=max(1, height))
+        # the scrollbar floats over the right edge, and the page narrows only while it shows
+        bar = self.scroll.winfo_reqwidth() + px(self, 6) if self.scrolling else 0
+        self.canvas.itemconfigure(self._win, width=max(1, w - bar), height=max(1, height))
         self.canvas.configure(scrollregion=(0, 0, w, height))
         if self.scrolling:
-            self.scroll.grid(row=0, column=1, sticky="ns", padx=(6, 0))
+            self.scroll.place(relx=1.0, rely=0, relheight=1.0, anchor="ne")
         else:
-            self.scroll.grid_remove()
+            self.scroll.place_forget()
             self.canvas.yview_moveto(0)
 
     def wheel(self, event):
@@ -110,3 +126,48 @@ class ScrollArea(ttk.Frame):
             return
         up = getattr(event, "num", 0) == 4 or getattr(event, "delta", 0) > 0
         self.canvas.yview_scroll(-3 if up else 3, "units")
+
+
+def rounded_rect(canvas, x0, y0, x1, y1, r, **kw):
+    """A rounded rectangle on a canvas (a smoothed polygon with doubled corner points)."""
+    r = max(0, min(r, (x1 - x0) / 2, (y1 - y0) / 2))
+    pts = [
+        x0 + r, y0, x1 - r, y0, x1, y0, x1, y0 + r,
+        x1, y1 - r, x1, y1, x1 - r, y1, x0 + r, y1,
+        x0, y1, x0, y1 - r, x0, y0 + r, x0, y0,
+    ]  # fmt: skip
+    return canvas.create_polygon(pts, smooth=True, splinesteps=24, **kw)
+
+
+class Bubble(tk.Canvas):
+    """A card with rounded corners, a tinted fill and a soft violet outline. Put widgets in .inner;
+    the bubble grows and shrinks to fit them."""
+
+    def __init__(self, parent, fill=None, outline=None, radius=12, pad=(14, 10), bg=None):
+        super().__init__(parent, highlightthickness=0, bd=0, bg=bg or T["card"], height=10, width=10)
+        self.fill, self.outline = fill or T["bubble"], outline or T["bubble_edge"]
+        self.radius, self.pad = px(self, radius), (px(self, pad[0]), px(self, pad[1]))
+        self.inner = tk.Frame(self, bg=self.fill)
+        self._win = self.create_window(self.pad[0], self.pad[1], window=self.inner, anchor="nw")
+        self.inner.bind("<Configure>", lambda e: self.refit())
+        self.bind("<Configure>", lambda e: self._draw())
+
+    def refit(self):
+        """Resize to the contents once Tk has laid them out (call after changing what's inside)."""
+        self.after_idle(self._fit)
+
+    def _fit(self):
+        self.inner.update_idletasks()
+        w = self.inner.winfo_reqwidth() + 2 * self.pad[0]
+        h = self.inner.winfo_reqheight() + 2 * self.pad[1]
+        self.configure(width=w, height=h)
+        self._draw()
+
+    def _draw(self):
+        self.delete("shape")
+        w, h = self.winfo_width(), self.winfo_height()
+        if w > 2 and h > 2:
+            rounded_rect(
+                self, 1, 1, w - 2, h - 2, self.radius, fill=self.fill, outline=self.outline, width=1, tags="shape"
+            )
+            self.tag_lower("shape")

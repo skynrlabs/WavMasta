@@ -38,6 +38,9 @@ class MasterPage(ttk.Frame):
         self.on_stop = on_stop
         self.tracks = []
         self.selected = None
+        self.busy = False
+        self.playing = False
+        self.on_lock = None  # app hook: called with True/False when listening starts or stops
         self._build_tracks(fonts)
         self.card = SoundCard(
             self,
@@ -128,6 +131,12 @@ class MasterPage(ttk.Frame):
             self.table.set_playing((self.tracks.index(track), which))
         else:
             self.table.set_playing(None)
+        playing = self.table.playing is not None
+        if playing != self.playing:
+            self.playing = playing
+            self._apply_lock()
+            if self.on_lock:
+                self.on_lock(playing)
 
     def refresh(self, select=None):
         """Rebuild the rows after songs were added or removed."""
@@ -179,10 +188,19 @@ class MasterPage(ttk.Frame):
             self.table.update_status(self.tracks.index(track), track)
 
     def set_enabled(self, on):
-        self.table.set_enabled(on)
-        self.card.set_enabled(on)
+        """Lock everything while WavMasta is working (checking, building a preview, mastering)."""
+        self.busy = not on
+        self._apply_lock()
+
+    def _apply_lock(self):
+        """Working locks everything. Listening locks the sound settings (so what you hear always matches
+        what they show) but leaves Before, After and Stop working."""
+        locked = self.busy or self.playing
+        self.table.set_enabled(not locked, keep_listening=self.playing and not self.busy)
+        note = "locked while playing · press Stop or Esc to change" if self.playing and not self.busy else ""
+        self.card.set_enabled(not locked, note)
         for b in (self.add_btn, self.clear_btn):
-            b.state(["!disabled"] if on else ["disabled"])
+            b.state(["!disabled"] if not locked else ["disabled"])
 
     def reset(self):
         for t in self.tracks:

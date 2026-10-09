@@ -187,7 +187,7 @@ def test_check_finds_problems_and_suggestions_apply(app, monkeypatch, copies):
     wait(app)
     t = page(app).tracks[0]
     assert t.report is not None
-    text = page(app).card.findings.cget("text")
+    text = page(app).card.findings_text()
     assert "Hiss" in text and "7,400 Hz" in text
     assert "to fix" in status(app)
     assert page(app).card.suggest_btn.winfo_manager()  # Use suggestions is showing
@@ -259,7 +259,7 @@ def test_master_saves_every_song(app, monkeypatch, copies, tmp_path):
     assert status(app) == "Done: 2 of 3 mastered"
     assert "disabled" not in app.action.open_btn.state()
     feed = app.activity.as_text()
-    assert "Master 3 songs" in feed and "2 of 3 saved" in feed and "notched 60 Hz" in feed
+    assert "Master 3 songs" in feed and "2 of 3 saved" in feed and "60 Hz, 120 Hz" in feed
 
 
 def test_master_reuses_the_preview_render(app, monkeypatch, copies):
@@ -335,3 +335,163 @@ def test_shortcuts(app, monkeypatch, copies):
     app.root.event_generate("<Control-Key-3>")
     app.root.update()
     assert app.page_title.get() == "Settings"
+
+
+# ---- listening locks the sound settings
+def test_playing_locks_the_sound_until_stopped(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    page(app)._play(0, "after")
+    wait(app)
+    card, row = page(app).card, page(app).table.rows[0]
+    # sound settings, adding/removing songs and Master are locked
+    assert all(s.cget("state") == "disabled" for s in card.sliders)
+    for w in (card.tone_box, card.loud_box, card.check_btn, card.ref_btn, card.hum_check, card.apply_btn):
+        assert "disabled" in w.state()
+    assert "disabled" in page(app).add_btn.state() and "disabled" in row["remove"].state()
+    assert "disabled" in app.action.master_btn.state()
+    assert "Stop" in card.hint.get()
+    # ...but Before, After and Stop still work, on every row
+    for r in page(app).table.rows:
+        assert "disabled" not in r["before"].state() and "disabled" not in r["after"].state()
+    # clicking another song's name doesn't move the card away from what's playing
+    page(app).table.rows[1]["name"].event_generate("<Button-1>")
+    app.root.update()
+    assert page(app).selected == 0
+    # shortcuts that change things say why they're waiting
+    app.root.event_generate("<Control-Return>")
+    app.root.update()
+    assert status(app) == "Stop playback first"
+    # Stop unlocks everything
+    page(app)._play(0, "after")
+    assert all(s.cget("state") == "normal" for s in card.sliders)
+    assert "disabled" not in card.tone_box.state() and "disabled" not in app.action.master_btn.state()
+    assert "disabled" not in row["remove"].state()
+    assert "Stop" not in card.hint.get()
+
+
+def test_switching_before_and_after_stays_locked(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app)._play(0, "after")
+    wait(app)
+    page(app)._play(0, "before")
+    wait(app)
+    assert page(app).table.playing == (0, "before")
+    assert "disabled" in page(app).card.tone_box.state()
+
+
+def test_playback_ending_by_itself_unlocks(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app)._play(0, "after")
+    wait(app)
+    app.preview._ended(app.preview.token)
+    assert page(app).table.playing is None
+    assert all(s.cget("state") == "normal" for s in page(app).card.sliders)
+
+
+def test_reference_keeps_tone_off_after_unlock(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    page(app).tracks[0].reference = copies["hum"]
+    page(app).card.show(page(app).tracks[0], 1)
+    page(app)._play(0, "after")
+    wait(app)
+    page(app)._play(0, "after")  # stop
+    assert "disabled" in page(app).card.tone_box.state()  # still off: the reference sets the tone
+
+
+def test_history_shows_a_breakdown_under_each_mastered_song(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["messy"]])
+    page(app).tracks[0].denoise = 40
+    app.masterer.start()
+    wait(app, 120)
+    feed = app.activity.as_text()
+    for line in (
+        "Clipping | none ✓",
+        "True peak |",
+        "under the -1 dBTP ceiling",
+        "Loudness | -14",
+        "Punch |",
+        "Hiss | reduced 40%",
+        "Hum and whine | removed",
+        "7,400 Hz",
+        "File | WAV 24-bit",
+    ):
+        assert line in feed, line
+    # the breakdown sits under the song, which is opened to show it
+    tree = app.activity.tree
+    action = tree.get_children()[0]
+    song = tree.get_children(action)[0]
+    assert tree.item(song, "open") and len(tree.get_children(song)) >= 7
+
+
+def test_breakdown_flags_what_was_found_but_not_fixed(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["hiss"]])
+    app.masterer.start()
+    wait(app, 120)
+    assert "Hiss | found, not reduced | try Noise reduction around 40%" in app.activity.as_text()
+
+
+# ---- text is never clipped by the next column
+def test_history_text_never_runs_under_the_next_column(app, monkeypatch, copies, tmp_path):
+    long = tmp_path / "Burning Down The Back Roads Of Simcoe County (Acoustic Demo, Take 4).wav"
+    shutil.copy(copies["messy"], long)
+    add(app, monkeypatch, [str(long)])
+    app.masterer.start()
+    wait(app, 120)
+    app.show_page("history")
+    app.root.update()
+    log = app.activity
+    log._fit_columns()
+    tree = log.tree
+    shortened = 0
+
+    def check(item, depth):
+        nonlocal shortened
+        font = log._font_for(item)
+        assert font.measure(tree.item(item, "text")) + 20 * (depth + 1) <= tree.column("#0", "width") + 2
+        for col, value in zip(log.COLUMNS, tree.item(item, "values"), strict=False):
+            if value:
+                assert font.measure(str(value)) <= tree.column(col, "width"), (col, value)
+        full, _ = log._full(item)
+        if tree.item(item, "text") != full:
+            assert tree.item(item, "text").endswith("…")
+            shortened += 1
+        for child in tree.get_children(item):
+            check(child, depth + 1)
+
+    for item in tree.get_children():
+        check(item, 0)
+    assert shortened >= 1  # the long name was shortened to fit...
+    assert long.name in log.as_text()  # ...but the full name is kept (hover shows it)
+    assert not log.xscroll.winfo_ismapped()  # and the table still fits without scrolling sideways
+
+
+def test_long_song_names_fit_or_end_in_an_ellipsis(app, monkeypatch, copies, tmp_path):
+    long = tmp_path / ("A Very Long Song Title That Goes On And On - Final Mix Version Three (Remastered).wav")
+    shutil.copy(copies["clean"], long)
+    add(app, monkeypatch, [copies["clean"], str(long)])
+    app.root.update()
+    table = page(app).table
+    for r in table.rows:
+        shown = r["name"].cget("text")
+        assert table.name_font.measure(shown) <= table.song_width
+        assert shown == r["full_name"] or shown.endswith("…")
+    assert table.rows[0]["name"].cget("text") == "Clean Song.wav"  # short names are never shortened
+
+
+def test_check_results_bubble_colours_each_finding(app, monkeypatch, copies):
+    from wavmasta.gui.theme import THEME
+
+    add(app, monkeypatch, [copies["messy"]])
+    app.checker.start()
+    wait(app)
+    box = page(app).card.bubble.inner
+    dots = [w.cget("fg") for w in box.winfo_children() if isinstance(w, tk.Label) and w.cget("text") == "●"]
+    assert dots and set(dots) == {THEME["warn"]}  # hiss, whine and fizz: all worth fixing
+    text = page(app).card.findings_text()
+    assert "CHECK RESULTS" in text and "LUFS" in text
+    assert "Try Noise reduction around 40%." in text  # the tip, on its own line in violet
+
+
+def test_bubble_before_check_invites_you_to_check(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    assert "Check this song to measure it" in page(app).card.findings_text()

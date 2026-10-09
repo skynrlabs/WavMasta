@@ -90,3 +90,61 @@ def test_reports_clipping():
     r = analyze(x, SR)
     assert r.clipped > 100
     assert r.findings()[0].startswith("Clipping")
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2, 3])
+@pytest.mark.parametrize("amp", [0.006, 0.01])
+def test_hum_is_found_on_the_exact_frequency_under_kick_and_bass(amp, seed):
+    """The test songs have a kick and a bass note within a few Hz of 60 Hz; the hum notch must still
+    land exactly on 60 and 120 (a narrow notch a few Hz off misses the hum)."""
+    from . import synth
+
+    tones = sorted(f for f, _ in find_tones(synth.song(hum=amp, seed=seed), SR))
+    assert tones == [60.0, 120.0]
+
+
+def test_50hz_hum_family():
+    from . import synth
+
+    x = synth.song()
+    t = np.arange(x.shape[1]) / SR
+    x = x + (0.006 * (np.sin(2 * np.pi * 50 * t) + 0.5 * np.sin(2 * np.pi * 100 * t))).astype(np.float32)
+    assert all(f % 50 == 0 for f, _ in find_tones(x, SR))
+
+
+def _report(top_end):
+    from wavmasta.core.analysis import Report
+
+    return Report(
+        duration=10, sample_rate=SR, lufs=-18, true_peak=-3, clipped=0, quiet_level=None, quiet_flatness=None,
+        top_end=top_end,
+    )  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "top_end, amount",
+    [(-13.0, 0.0), (-11.5, 3.0), (-10.0, 4.5), (-9.0, 5.5), (-5.0, 6.0)],
+)
+def test_tame_harsh_highs_amount_is_worked_out_from_the_song(top_end, amount):
+    r = _report(top_end)
+    assert r.tame_amount == amount
+    if amount:
+        assert r.suggested()["tame_top"] == amount
+        assert f"Try Tame harsh highs at -{amount:g} dB" in " ".join(r.findings())
+    else:
+        assert "tame_top" not in r.suggested()  # not fizzy: your own setting is left alone
+
+
+def test_strongest_setting_is_called_out():
+    assert "(its strongest setting)" in " ".join(_report(-4.0).findings())
+
+
+def test_suggested_amount_lowers_the_top_end_as_promised(audio):
+    from wavmasta.core import cleanup
+
+    x = audio["fizz"]
+    r = analyze(x, SR)
+    n = r.tame_amount
+    y = cleanup.apply(x, SR, cleanup.cleanup_filters(tame_top=n, highpass=0))
+    drop = r.top_end - analyze(y, SR).top_end
+    assert drop == pytest.approx(n * 0.9, abs=0.6)  # SHELF_EFFECT, measured

@@ -20,7 +20,10 @@ THEME = {
     "ok": "#34d399",
     "warn": "#fbbf24",
     "sel": "#2a2350",  # selected row
-    "bar": "#0d0d18",  # top bar
+    "bar": "#0d0d18",  # sidebar
+    "bubble": "#241f45",  # Check results bubble: a violet tint over the panels
+    "bubble_edge": "#4b3a8c",
+    "bad": "#f87171",  # clipping: something mastering can't fix
 }
 
 
@@ -117,6 +120,7 @@ def apply_styles(root, F):
     st.configure("Card.TLabel", background=T["card"])
     st.configure("Muted.TLabel", background=T["card"], foreground=T["muted"], font=F["small"])
     st.configure("Head.TLabel", background=T["card"], foreground=T["text"], font=F["h"])
+    st.configure("Lock.TLabel", background=T["card"], foreground=T["accent2"], font=F["small"])
     st.configure("Section.TLabel", background=T["card"], foreground=T["accent_soft"], font=F["small"])
     st.configure("Title.TLabel", font=F["title"])
     st.configure("Sub.TLabel", foreground=T["muted"], font=F["sub"])
@@ -152,6 +156,20 @@ def apply_styles(root, F):
         foreground=[("disabled", T["muted"])],
     )
     st.configure(
+        "Pink.TButton",
+        background=T["accent2"],
+        foreground=T["accent_text"],
+        font=F["small"],
+        padding=(10, 3),
+        lightcolor=T["accent2"],
+        darkcolor=T["accent2"],
+    )
+    st.map(
+        "Pink.TButton",
+        background=[("active", "#f472b6"), ("disabled", T["line"])],
+        foreground=[("disabled", T["muted"])],
+    )
+    st.configure(
         "TCheckbutton",
         background=T["card"],
         foreground=T["text"],
@@ -176,8 +194,9 @@ def apply_styles(root, F):
         )
         st.map(
             w,
-            fieldbackground=[("readonly", T["field"]), ("disabled", T["card"])],
-            foreground=[("readonly", T["text"]), ("disabled", T["muted"])],
+            fieldbackground=[("disabled", T["card"]), ("readonly", T["field"])],  # disabled first: it wins
+            foreground=[("disabled", T["muted"]), ("readonly", T["text"])],
+            arrowcolor=[("disabled", T["line_hover"])],
             selectbackground=[("readonly", T["field"])],
             selectforeground=[("readonly", T["text"])],
         )

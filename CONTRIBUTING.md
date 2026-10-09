@@ -32,11 +32,13 @@ WavMasta is open-source under the **MIT** license. By submitting a contribution 
 
 ## Opening Issues
 
+Pick the form that fits on the [New issue](https://github.com/skynrlabs/WavMasta/issues/new/choose) page: **Bug report** (something doesn't work), **Sound problem** (the master sounds wrong) or **Feature request**. Questions go in [Discussions](https://github.com/skynrlabs/WavMasta/discussions).
+
 Before opening an issue:
 
 - Search existing issues to avoid duplicates.
 - For bugs, include: OS, Python version, the song's format (WAV, MP3...), the settings you used, and what you expected vs. what happened.
-- For sound problems (artifacts, a missed hum, wrong loudness), a short clip helps a lot, if you have the rights to share it.
+- For sound problems (artifacts, a missed hum, wrong loudness), paste the song's report from the **History** page. A short clip helps a lot too, if you have the rights to share it.
 - For feature requests, describe the problem you are trying to solve, not just the solution.
 - For security issues, **do not open a public issue** — see [SECURITY.md](SECURITY.md).
 

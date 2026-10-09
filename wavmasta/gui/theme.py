@@ -24,6 +24,12 @@ THEME = {
 }
 
 
+def px(widget, n):
+    """n pixels at 100% display scaling, grown to match Windows scaling (125%, 150%...),
+    so fixed sizes keep pace with the text."""
+    return int(round(n * float(widget.tk.call("tk", "scaling")) / (96 / 72)))
+
+
 def blend(c1, c2, t):
     """Mix two #rrggbb colours: t=0 gives c1, t=1 gives c2."""
     a = [int(c1[i : i + 2], 16) for i in (1, 3, 5)]

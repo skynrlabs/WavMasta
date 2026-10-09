@@ -49,7 +49,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
 - 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** gives an album one sound
 - ✅ **Always know where you stand**: each song shows when it's saved, and says *changed · master again* if you tweak it afterwards
-- 🧭 **Clean navigation**: tabs across the top and keyboard shortcuts
+- 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
 ---
@@ -90,7 +90,7 @@ python -m wavmasta
 
 ## ⚙️ How It Works
 
-Everything happens on the **Master** tab, top to bottom:
+Everything happens on the **Master** page, top to bottom:
 
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
@@ -98,9 +98,9 @@ Everything happens on the **Master** tab, top to bottom:
 4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-The **History** tab lists everything Check, Before/After and Master did; double-click a saved song to open its folder.
+**History** lists everything Check, Before/After and Master did; double-click a saved song to open its folder.
 
-The **Settings** tab holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
+**Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
 ### The chain
 
@@ -125,7 +125,7 @@ The **Settings** tab holds where masters are saved (next to each song by default
 | `Ctrl+P` | Hear after |
 | `Esc` | Stop playback |
 | `Ctrl+Enter` | Master |
-| `Ctrl+1` to `Ctrl+4` | Master, History, Settings, Help tabs |
+| `Ctrl+1` to `Ctrl+4` | Master, History, Settings, Help pages |
 | `F1` | Help |
 
 ---
@@ -179,7 +179,7 @@ wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
 | The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
 | A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
 | **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |
-| Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** tab and master again. |
+| Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** page and master again. |
 | My song sounds quieter than others on Spotify | That's normalisation: Spotify plays everything at about the same loudness. A -14 LUFS master loses nothing. |
 | No sound when pressing Before or After | Check your output device and volume. If it can't play, the status card shows where the preview file was saved. |
 
@@ -204,11 +204,11 @@ wavmasta/
 └── gui/                 The window
     ├── app.py           Main window and shared plumbing
     ├── journeys.py      Check, Before/After and Master workflows
-    ├── pages/           Master, History, Settings and Help tabs
+    ├── pages/           Master, History, Settings and Help pages
     ├── model.py         Each song's own sound settings and status
     ├── tracks_table.py  The songs list: a row per song with Before, After and status
     ├── sound_card.py    The selected song's sound card
-    ├── topbar.py        Top bar with the tabs
+    ├── sidebar.py       Left-hand navigation
     ├── status_card.py   The large status message above the buttons
     ├── action_bar.py    Save location, Open folder and Master
     ├── activity.py      The History table

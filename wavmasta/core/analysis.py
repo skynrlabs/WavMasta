@@ -251,7 +251,9 @@ class Report:
 
     def suggested(self):
         """Settings this report suggests: {setting name: value}."""
-        s = {"denoise": 40 if self.hiss else 0, "fix_tones": bool(self.tones)}
+        s = {"denoise": 40 if self.hiss else 0}
+        if self.tones:  # only ever turn it on: with no steady tone found it does nothing anyway
+            s["fix_tones"] = True
         if self.fizzy:
             s["tame_top"] = 3.0 if self.top_end > -8 else 1.5
         else:

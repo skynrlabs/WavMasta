@@ -1,4 +1,4 @@
-"""The main window: top bar, page area and action bar, plus the shared plumbing the journeys use."""
+"""The main window: sidebar, page area and action bar, plus the shared plumbing the journeys use."""
 
 import contextlib
 import os
@@ -14,9 +14,10 @@ from .dialogs import show_about
 from .journeys import CheckJourney, MasterJourney, PreviewJourney, Renders
 from .pages import PAGES, HelpPage, HistoryPage, MasterPage, SettingsPage
 from .shortcuts import bind_shortcuts
+from .sidebar import Sidebar
 from .status_card import StatusCard
-from .theme import THEME, apply_styles, make_fonts
-from .topbar import TopBar
+from .theme import THEME, apply_styles, make_fonts, px
+from .widgets import ScrollArea
 
 IS_WINDOWS = sys.platform.startswith("win")
 
@@ -43,8 +44,12 @@ class WavMastaApp:
         root.protocol("WM_DELETE_WINDOW", self.quit)
 
         self.master_page.refresh()
+        self.area.skip = [self.master_page.table]  # the songs list scrolls by itself
+        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            root.bind_all(seq, self.area.wheel, add="+")
         self._show_where()
         self.show_page("master")
+        self._fit_window()
         self.say("Ready", detail="Drop your songs onto the window, pick a sound, then Master")
         self._poll()
 
@@ -53,12 +58,33 @@ class WavMastaApp:
         root = self.root
         root.title("WavMasta")
         root.configure(bg=THEME["bg"])
-        root.minsize(900, 740)
-        root.geometry("1000x840")
         ico = os.path.join(ASSETS_DIR, "wavmasta.ico")
         if IS_WINDOWS and os.path.exists(ico):
             with contextlib.suppress(tk.TclError):
                 root.iconbitmap(default=ico)
+
+    def _fit_window(self):
+        """Open the window big enough for everything on the Master tab, at any display scaling,
+        but never bigger than the screen (the page scrolls if the screen is too short)."""
+        root = self.root
+        card = self.master_page.card
+        card.empty.grid_remove()  # measure with a song's Sound card showing, as it is in use,
+        card.body.grid()  # including a few lines of Check findings
+        card.findings.configure(text="\n".join(["Now: -20.0 LUFS · peak -4.0 dBTP"] + ["• finding"] * 5))
+        for _ in range(3):  # sizes settle from the inside out, one layout pass per level
+            root.update_idletasks()
+        # ask for the full height once (plus a little room for long findings)
+        self.area.canvas.configure(height=self.area.needed_height() + px(root, 24))
+        for _ in range(3):
+            root.update_idletasks()
+        card.show(card.track)
+        sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
+        scale = float(root.tk.call("tk", "scaling")) / (96 / 72)  # 1.0 at 100% display scaling
+        w = min(max(root.winfo_reqwidth(), int(1100 * scale)), sw - 40)
+        h = min(root.winfo_reqheight(), sh - int(90 * scale))  # leave room for the taskbar and title bar
+        self.area.canvas.configure(height=1)  # from now on the page area follows the window
+        root.minsize(min(int(960 * scale), w), min(int(520 * scale), h))
+        root.geometry(f"{w}x{h}")
 
     def _load_images(self):
         images = {}
@@ -103,15 +129,15 @@ class WavMastaApp:
 
     def _build_layout(self):
         root = self.root
-        root.columnconfigure(0, weight=1)
-        root.rowconfigure(1, weight=1)
-        self.nav = TopBar(
+        root.columnconfigure(1, weight=1)
+        root.rowconfigure(0, weight=1)
+        self.nav = Sidebar(
             root, [(k, label) for k, label, _, _ in PAGES], self.show_page, self.fonts, self.images.get("small")
         )
-        self.nav.grid(row=0, column=0, sticky="ew")
+        self.nav.grid(row=0, column=0, sticky="ns")
 
         main = self.main = ttk.Frame(root, padding=(24, 16, 24, 14))
-        main.grid(row=1, column=0, sticky="nsew")
+        main.grid(row=0, column=1, sticky="nsew")
         main.columnconfigure(0, weight=1)
         main.rowconfigure(1, weight=1)
 
@@ -122,8 +148,9 @@ class WavMastaApp:
         ttk.Label(header, textvariable=self.page_title, style="Title.TLabel").pack(anchor="w")
         ttk.Label(header, textvariable=self.page_sub, style="Sub.TLabel").pack(anchor="w")
 
-        box = ttk.Frame(main)
-        box.grid(row=1, column=0, sticky="nsew")
+        self.area = ScrollArea(main)
+        self.area.grid(row=1, column=0, sticky="nsew")
+        box = self.area.inner
         box.columnconfigure(0, weight=1)
         box.rowconfigure(0, weight=1)
         self.settings_page = SettingsPage(box, on_reset=self.reset_settings)
@@ -167,6 +194,7 @@ class WavMastaApp:
     # ---- navigation
     def show_page(self, key):
         self.pages[key].tkraise()
+        self.area.show(self.pages[key])
         for k, _, title, sub in PAGES:
             if k == key:
                 self.page_title.set(title)

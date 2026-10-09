@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from .theme import THEME as T
-from .theme import blend
+from .theme import blend, px
 
 COLORS = {"muted": "text", "busy": "accent_soft", "ok": "ok", "warn": "warn"}
 DOTS = {"muted": "muted", "busy": "accent", "ok": "ok", "warn": "warn"}
@@ -32,7 +32,9 @@ class StatusCard(tk.Frame):
             self, textvariable=self.detail, bg=T["card"], fg=T["muted"], font=fonts["body"], anchor="w"
         )
         self.detail_lbl.grid(row=1, column=1, sticky="ew", padx=(12, 14), pady=(2, 10))
-        self.progress = ttk.Progressbar(self, mode="determinate", style="Horizontal.TProgressbar", length=260)
+        self.progress = ttk.Progressbar(
+            self, mode="determinate", style="Horizontal.TProgressbar", length=px(parent, 260)
+        )
         self._paint_dot()
 
     def _paint_dot(self):

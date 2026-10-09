@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wavmasta"
+dynamic = ["version"]
+description = "Clean up and master your songs, ready for release."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Skynr Labs" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pedalboard",  # Spotify's audio library: EQ, compressor, limiter, reading and writing audio files
+    "tkinterdnd2",  # drag and drop songs onto the window
+]
+keywords = ["mastering", "audio", "loudness", "noise-reduction", "music-production"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: Editors",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "pyloudnorm"]  # pyloudnorm: the tests check WavMasta's loudness meter against it
+
+[project.urls]
+Homepage = "https://github.com/skynrlabs/WavMasta"
+Issues = "https://github.com/skynrlabs/WavMasta/issues"
+
+[project.scripts]
+wavmasta = "wavmasta.__main__:main"
+
+[project.gui-scripts]
+wavmasta-app = "wavmasta.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "wavmasta.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["wavmasta*"]
+
+[tool.setuptools.package-data]
+wavmasta = ["assets/*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["packaging/wavmasta.spec"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, likely bugs, modern syntax, simplifications
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]
+ignore = [
+    "SIM108",  # ternaries aren't always clearer
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "gui: opens the window (needs a display; run under xvfb on Linux)",
+]

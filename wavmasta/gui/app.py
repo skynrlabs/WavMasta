@@ -1,0 +1,266 @@
+"""The main window: sidebar, page area and action bar, plus the shared plumbing the journeys use."""
+
+import contextlib
+import os
+import queue
+import subprocess
+import sys
+import tkinter as tk
+from tkinter import ttk
+
+from ..config import ASSETS_DIR
+from .action_bar import ActionBar
+from .dialogs import show_about
+from .journeys import CheckJourney, MasterJourney, PreviewJourney, Renders
+from .pages import PAGES, HelpPage, HistoryPage, MasterPage, SettingsPage
+from .shortcuts import bind_shortcuts
+from .sidebar import Sidebar
+from .status_card import StatusCard
+from .theme import THEME, apply_styles, make_fonts
+
+IS_WINDOWS = sys.platform.startswith("win")
+
+
+class WavMastaApp:
+    def __init__(self, root):
+        self.root = root
+        self.busy = False
+        self.updates = queue.Queue()  # background threads -> window
+        self.renders = Renders()
+        self._setup_window()
+        self.fonts = make_fonts()
+        apply_styles(root, self.fonts)
+        self.images = self._load_images()
+
+        self.masterer = MasterJourney(self)
+        self.preview = PreviewJourney(self)
+        self.checker = CheckJourney(self)
+
+        self._build_layout()
+        self.dnd_enabled = self._enable_drag_and_drop()
+        bind_shortcuts(self)
+        self._wire_buttons()
+        root.protocol("WM_DELETE_WINDOW", self.quit)
+
+        self.master_page.refresh()
+        self._show_where()
+        self.show_page("master")
+        self.say("Ready", detail="Drop your songs onto the window, pick a sound, then Master")
+        self._poll()
+
+    # ---- window setup
+    def _setup_window(self):
+        root = self.root
+        root.title("WavMasta")
+        root.configure(bg=THEME["bg"])
+        root.minsize(980, 720)
+        root.geometry("1080x820")
+        ico = os.path.join(ASSETS_DIR, "wavmasta.ico")
+        if IS_WINDOWS and os.path.exists(ico):
+            with contextlib.suppress(tk.TclError):
+                root.iconbitmap(default=ico)
+
+    def _load_images(self):
+        images = {}
+        try:
+            images["app"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon.png"))
+            images["small"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-32.png"))
+            images["about"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-64.png"))
+            if not IS_WINDOWS:  # Windows uses the .ico set above, which looks sharper in the title bar
+                self.root.iconphoto(True, images["app"])
+        except tk.TclError:
+            pass
+        return images
+
+    def _enable_drag_and_drop(self):
+        """Let people drop songs (or a folder of songs) from Explorer/Finder onto the window."""
+        try:
+            from tkinterdnd2 import DND_FILES, TkinterDnD
+
+            TkinterDnD._require(self.root)
+        except Exception:
+            return False  # optional: Add songs... still works
+        table = self.master_page.table
+        targets = [self.main, self.master_page, table.canvas, table.body, table.empty]
+        for w in targets:
+            w.drop_target_register(DND_FILES)
+            w.dnd_bind("<<DropEnter>>", lambda e: (table.set_drop_highlight(True), e.action)[1])
+            w.dnd_bind("<<DropPosition>>", lambda e: e.action)
+            w.dnd_bind("<<DropLeave>>", lambda e: (table.set_drop_highlight(False), e.action)[1])
+            w.dnd_bind("<<Drop>>", self._on_drop)
+        return True
+
+    def _on_drop(self, event):
+        self.master_page.table.set_drop_highlight(False)
+        paths = self.root.tk.splitlist(event.data)
+        added = self.master_page.add_paths(paths)
+        self.show_page("master")
+        if added:
+            self.say(f"Added {added} song{'s' if added != 1 else ''}", "ok")
+        else:
+            self.say("No new songs in what you dropped", "warn", "WavMasta reads WAV, FLAC, MP3, AIFF, OGG and M4A")
+        return event.action
+
+    def _build_layout(self):
+        root = self.root
+        root.columnconfigure(1, weight=1)
+        root.rowconfigure(0, weight=1)
+        self.sidebar = Sidebar(
+            root, [(k, label) for k, label, _, _ in PAGES], self.show_page, self.fonts, self.images.get("small")
+        )
+        self.sidebar.grid(row=0, column=0, sticky="ns")
+
+        main = self.main = ttk.Frame(root, padding=(22, 16, 22, 12))
+        main.grid(row=0, column=1, sticky="nsew")
+        main.columnconfigure(0, weight=1)
+        main.rowconfigure(1, weight=1)
+
+        header = ttk.Frame(main)
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+        self.page_title = tk.StringVar()
+        self.page_sub = tk.StringVar()
+        ttk.Label(header, textvariable=self.page_title, style="Title.TLabel").pack(anchor="w")
+        ttk.Label(header, textvariable=self.page_sub, style="Sub.TLabel").pack(anchor="w")
+
+        box = ttk.Frame(main)
+        box.grid(row=1, column=0, sticky="nsew")
+        box.columnconfigure(0, weight=1)
+        box.rowconfigure(0, weight=1)
+        self.settings_page = SettingsPage(box, on_reset=self.reset_settings)
+        self.history_page = HistoryPage(box, self.fonts)
+        self.master_page = MasterPage(
+            box,
+            self.fonts,
+            self.settings_page,
+            on_change=self._on_tracks_changed,
+            on_play=lambda which: self.preview.start(which),
+            on_stop=lambda: self.preview.stop(),
+            on_analyze=lambda: self.checker.start(),
+            on_suggest=self.use_suggestions,
+        )
+        self.help_page = HelpPage(box, self.fonts, self.about)
+        self.pages = {
+            "master": self.master_page,
+            "history": self.history_page,
+            "settings": self.settings_page,
+            "help": self.help_page,
+        }
+        for page in self.pages.values():
+            page.grid(row=0, column=0, sticky="nsew")
+
+        self.status_card = StatusCard(main, self.fonts)
+        self.status_card.grid(row=2, column=0, sticky="ew", pady=(4, 10))
+        self.action = ActionBar(main)
+        self.action.grid(row=3, column=0, sticky="ew")
+
+    def _wire_buttons(self):
+        self.action.master_btn.configure(command=self.masterer.start)
+        self.action.open_btn.configure(command=self.open_folder)
+        self.activity.on_open = self.open_path
+        sp = self.settings_page
+        for var in (sp.format_var, sp.out_text):
+            var.trace_add("write", lambda *_: self._show_where())
+
+    def _show_where(self):
+        self.action.set_where(self.settings_page.format_var.get(), self.settings_page.out_text.get())
+
+    # ---- navigation
+    def show_page(self, key):
+        self.pages[key].tkraise()
+        for k, _, title, sub in PAGES:
+            if k == key:
+                self.page_title.set(title)
+                self.page_sub.set(sub)
+        self.sidebar.set_active(key)
+
+    @property
+    def activity(self):
+        return self.history_page.activity
+
+    def _on_tracks_changed(self, message=None):
+        n = len(self.master_page.tracks)
+        self.sidebar.set_label("master", f"Master  ({n})" if n else "Master")
+        self.action.set_master_label(self.master_page.tracks)
+        if message:
+            self.say(message, "ok")
+
+    # ---- plumbing shared by the journeys
+    def post(self, fn):
+        """Run fn on the window's thread (safe to call from a background thread)."""
+        self.updates.put(fn)
+
+    def say(self, msg, kind="muted", detail=""):
+        """Show a message in the status card. kind: muted, busy, ok or warn."""
+        self.status_card.say(msg, kind, detail)
+
+    def set_busy(self, on):
+        self.busy = on
+        self.action.master_btn.state(["disabled"] if on else ["!disabled"])
+        self.master_page.set_enabled(not on)
+
+    def _poll(self):
+        try:
+            while True:
+                self.updates.get_nowait()()
+        except queue.Empty:
+            pass
+        self._poll_id = self.root.after(100, self._poll)
+
+    # ---- commands
+    def use_suggestions(self):
+        track = self.master_page.selected_track()
+        if track is None or track.report is None:
+            return
+        changed = track.use_suggestions()
+        self.master_page.card.show(track, len(self.master_page.tracks))
+        self.master_page.refresh_staleness()
+        if changed:
+            names = {"denoise": "noise reduction", "fix_tones": "hum and whine", "tame_top": "harsh highs"}
+            self.say(
+                "Suggestions applied",
+                "ok",
+                "Changed " + ", ".join(names[c] for c in changed) + ". Press After to hear it",
+            )
+
+    def open_folder(self):
+        d = self.masterer.last_out_dir or self.settings_page.out_dir
+        if not d:
+            self.say("Master something first, then Open folder", "warn")
+            return
+        self.open_path(d)
+
+    def open_path(self, d):
+        """Show a folder in Explorer / Finder / the file manager."""
+        if IS_WINDOWS:
+            os.startfile(d)
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", d])
+        else:
+            subprocess.Popen(["xdg-open", d])
+
+    def reset_settings(self):
+        self.settings_page.reset()
+        self.master_page.reset()
+        self.say("Settings reset to defaults", "ok")
+
+    def about(self):
+        show_about(self.root, self.fonts, self.images.get("about"))
+
+    def quit(self):
+        self.preview.player.stop()
+        with contextlib.suppress(Exception):
+            self.root.after_cancel(self._poll_id)
+        self.root.destroy()
+
+
+def run_gui():
+    if IS_WINDOWS:
+        try:  # show WavMasta's own icon on the taskbar instead of Python's
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SkynrLabs.WavMasta")
+        except Exception:
+            pass
+    root = tk.Tk()
+    WavMastaApp(root)
+    root.mainloop()

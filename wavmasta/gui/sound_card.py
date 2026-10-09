@@ -123,9 +123,11 @@ class SoundCard(ttk.Frame):
         self.ref_btn.pack(side="left")
         self.ref_clear = ttk.Button(ref, text="Clear", style="Small.TButton", command=self.clear_reference)
         self.ref_text = tk.StringVar()
-        ttk.Label(f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left").grid(
-            row=7, column=1, sticky="w"
+        self.ref_hint = ttk.Label(
+            f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left"
         )
+        self.ref_hint.grid(row=7, column=1, sticky="w")
+        f.bind("<Configure>", lambda e: self._wrap_ref_hint(f), add="+")
         self.fade_var, self.fade_text = tk.DoubleVar(value=0.0), tk.StringVar()
         self._slider_row(f, 8, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
         self.trim_var = tk.BooleanVar(value=True)
@@ -134,10 +136,9 @@ class SoundCard(ttk.Frame):
         self.trim_check.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
         # hear the change right here, under the settings you just changed
-        ttk.Separator(f).grid(row=10, column=0, columnspan=2, sticky="ew", pady=(10, 8))
         self._label(f, 11, "Hear")
         hear = ttk.Frame(f, style="Inner.TFrame")
-        hear.grid(row=11, column=1, sticky="w")
+        hear.grid(row=11, column=1, sticky="w", pady=(8, 0))
         self.hear = {}
         for which in ("before", "after"):
             b = ttk.Button(hear, text=which.capitalize(), style="Small.TButton", width=8,
@@ -147,6 +148,13 @@ class SoundCard(ttk.Frame):
         self.hear_text = tk.StringVar()
         self.hear_label = ttk.Label(f, textvariable=self.hear_text, style="Muted.TLabel")
         self.hear_label.grid(row=12, column=1, sticky="w")
+
+    def _wrap_ref_hint(self, column):
+        """Wrap the Reference hint to the room the column really has (a scrollbar can take some)."""
+        start = column.grid_bbox(column=1, row=7)[0]
+        room = column.winfo_width() - start - px(column, 4)
+        if room > 50 and int(float(self.ref_hint.cget("wraplength"))) != room:
+            self.ref_hint.configure(wraplength=room)
 
     # ---- right: cleanup and checking
     def _build_cleanup(self, f, fonts, on_analyze, on_suggest):

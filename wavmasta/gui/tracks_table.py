@@ -17,6 +17,7 @@ STATUS_COLORS = {"muted": "muted", "busy": "accent_soft", "ok": "ok", "warn": "w
 # Song is sized to fit the longest name (see TracksTable._layout); Status takes the rest.
 COLUMNS = [("Song", 200), ("Status", 0), ("", 96)]
 SONG = 0  # index of the Song column
+INSET = 14  # px of padding before each song name, which the Song column must also make room for
 SONG_SHARE = 0.55  # the Song column may use up to this much of the room left after the buttons
 
 
@@ -63,7 +64,7 @@ class TracksTable(ttk.Frame):
         _columns(head)
         for i, (text, _) in enumerate(COLUMNS):
             tk.Label(head, text=text, bg=T["card"], fg=T["accent_soft"], font=fonts["small"], anchor="w").grid(
-                row=0, column=i, sticky="w", padx=(14, 0) if i == SONG else 0
+                row=0, column=i, sticky="w", padx=(px(self, INSET), 0) if i == SONG else 0
             )
 
         self.canvas = tk.Canvas(self, bg=T["field"], highlightthickness=0, height=px(self, ROW_HEIGHT) * 2)
@@ -118,7 +119,7 @@ class TracksTable(ttk.Frame):
         frame.rowconfigure(0, weight=1)
         _columns(frame)
         name = tk.Label(frame, text=track.name, bg=T["field"], fg=T["text"], font=F["btn"], anchor="w")
-        name.grid(row=0, column=0, sticky="ew", padx=(14, 0))
+        name.grid(row=0, column=0, sticky="ew", padx=(px(self, INSET), 0))
         status = tk.Label(frame, text=track.status, bg=T["field"], font=F["body"], anchor="w")
         status.grid(row=0, column=1, sticky="ew")
         remove = ttk.Button(frame, text="Remove", style="Small.TButton", command=lambda: self.on_remove(i))
@@ -175,14 +176,14 @@ class TracksTable(ttk.Frame):
             return
         fixed = sum(px(self, w) for (_, w) in COLUMNS if w and _ != "Song") + px(self, 22)
         room = max(0, width - fixed)
-        gap = px(self, 16)
-        longest = max((self.name_font.measure(r["full_name"]) for r in self.rows), default=0) + gap
+        gap, inset = px(self, 16), px(self, INSET)
+        longest = max((self.name_font.measure(r["full_name"]) for r in self.rows), default=0) + gap + inset
         song = int(min(max(px(self, 200), longest), room * SONG_SHARE))
         self.song_width, self.status_width = song, max(0, room - song - gap)
         _columns(self.head, song)
         for r in self.rows:
             _columns(r["frame"], song)
-            r["name"].configure(text=fit_text(self.name_font, r["full_name"], song - gap))
+            r["name"].configure(text=fit_text(self.name_font, r["full_name"], song - gap - inset))
             r["status"].configure(text=fit_text(self.status_font, r["full_status"], self.status_width))
 
     def set_enabled(self, on):

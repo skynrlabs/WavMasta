@@ -257,12 +257,16 @@ class ActivityLog:
         if spare >= 0:
             width["details"] += spare  # everything fits: give the rest to Details
         else:
-            # Too wide: give way in order of importance. Details (the readings) keeps its text longest;
-            # long file names give way first and are shortened with "…" (hover shows them in full).
+            # Too wide: give way in order of importance. Long file names give way first, then Details
+            # down to about a third of the table, then Result; text that doesn't fit ends in "…" (hover
+            # shows it in full).
             over = -spare
             steps = [
                 ("saved", px(tree, self.MIN["saved"])),
                 ("#0", max(px(tree, self.MIN["#0"]), int(room * 0.26))),
+                # Result holds short verdicts ("reduced 40%", "within 0.4 LU"); the longer Details
+                # gives way to about a third of the table first, so those stay whole
+                ("details", max(px(tree, self.MIN["details"]), int(room * 0.30))),
                 ("result", px(tree, self.MIN["result"])),
                 ("details", px(tree, self.MIN["details"])),
                 ("#0", px(tree, self.MIN["#0"])),

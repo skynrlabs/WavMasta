@@ -169,28 +169,76 @@ def find_tones(audio, sr, threshold_db=10.0, fmin=40, fmax=16000, max_n=6):
         k = g[int(np.argmax(excess[g]))]
         f = float(freqs[k])
         if fine is None:
-            fine = welch(mono, sr, nperseg=min(mono.size, 1 << 16))  # ~0.7 Hz steps for exact frequencies
-        tones.append((_refine(f, *fine), float(excess[k])))
+            fine = _steady_spectrum(mono, sr)
+        tones.append((float(_refine(f, *fine)), float(excess[k])))
+    tones = _snap_to_hum_family(tones)
     tones.sort(key=lambda t: -t[1])
     return tones[:max_n]
 
 
-def _refine(freq, ff, psd):
-    """Pin a tone's frequency down precisely: hum snaps to its 50/60 Hz harmonic, anything else to
-    the exact spectral peak (a narrow notch that's 1 Hz off misses most of a low tone)."""
-    for base in (50.0, 60.0):
-        k = round(freq / base)
-        if 1 <= k <= 6 and abs(freq - k * base) < 4:
-            return k * base
+def _snap_to_hum_family(tones):
+    """Mains hum always comes as a family: 60, 120, 180... Hz (or 50, 100, 150... in Europe).
+    When one member is found exactly, low tones near the family's other members are snapped onto
+    them; a kick drum or bass sitting on the same spot can blur those members on their own."""
+    base = None
+    # decide the family from members above 90 Hz first: the 50/60 Hz fundamentals are the ones a
+    # kick or bass blurs, and a blurred 60 can even land on exactly 50
+    for pool in ([t for t in tones if t[0] >= 90], tones):
+        for f, _ in sorted(pool, key=lambda t: -t[1]):
+            for b in (60.0, 50.0):
+                k = round(f / b)
+                if 1 <= k <= 6 and abs(f - k * b) < 0.25 and not (b == 50.0 and f % 60 == 0 and f >= 90):
+                    base = b
+                    break
+            if base:
+                break
+        if base:
+            break
+    if base is None:
+        return tones
+    merged = {}
+    for f, ex in tones:
+        k = round(f / base)
+        if f < 400 and 1 <= k <= 6 and abs(f - k * base) <= 10:
+            f = k * base
+        merged[f] = max(ex, merged.get(f, ex))
+    return list(merged.items())
+
+
+def _steady_spectrum(mono, sr):
+    """Fine-resolution (about 1.3 Hz) spectrum of what's always there: the 10th-percentile level of
+    each frequency over time. A hum keeps its level; notes, even loud ones, drop out between plays."""
+    n = 32768 if mono.size >= 32768 * 6 else 8192
+    ff, _, z = stft(mono, sr, nperseg=n, noverlap=n // 2)
+    return ff, np.percentile(np.abs(z), 10, axis=1)
+
+
+def _refine(freq, ff, steady):
+    """Pin a tone's frequency down precisely, since a narrow notch that's 1 Hz off misses most of a
+    low tone. Hum is a razor-thin line, while a kick drum or bass is broad, so this picks the
+    sharpest steady peak near the rough estimate (not the loudest), snapped to exact mains hum."""
+    step = ff[1] - ff[0]
     near = np.where(np.abs(ff - freq) <= 8)[0]
     if near.size < 3:
-        return freq
-    i = near[int(np.argmax(psd[near]))]
-    if 0 < i < len(psd) - 1:  # parabolic interpolation between bins
-        a, b, c = np.log(psd[i - 1 : i + 2] + 1e-30)
-        d = 0.5 * (a - c) / (a - 2 * b + c) if (a - 2 * b + c) != 0 else 0.0
-        return float(ff[i] + d * (ff[1] - ff[0]))
-    return float(ff[i])
+        return float(freq)
+    reach = max(4, int(round(8 / step)))  # how far either side counts as "around" the peak
+
+    def sharpness(i):
+        lo, hi = max(0, i - reach), min(len(steady), i + reach + 1)
+        ring = np.concatenate([steady[lo : max(lo, i - 2)], steady[i + 3 : hi]])
+        return steady[i] / (np.median(ring) + 1e-30) if ring.size else 0.0
+
+    i = max(near, key=sharpness)
+    f = float(ff[i])
+    if 0 < i < len(steady) - 1:  # parabolic interpolation between bins
+        a, b, c = np.log(steady[i - 1 : i + 2] + 1e-30)
+        den = a - 2 * b + c
+        f += float(0.5 * (a - c) / den if den != 0 else 0.0) * step
+    for base in (50.0, 60.0):
+        k = round(f / base)
+        if 1 <= k <= 6 and abs(f - k * base) <= max(1.0, step):
+            return k * base
+    return f
 
 
 def tone_kind(freq):

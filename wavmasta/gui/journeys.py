@@ -12,7 +12,7 @@ import threading
 
 from ..core import Player, ab_clips, analyze, load, master_audio, output_path, save
 from ..core.preview import write_wav16
-from .activity import describe, short_path
+from .activity import master_report, short_path
 
 PREVIEW_DIR = tempfile.gettempdir()
 
@@ -288,11 +288,12 @@ class MasterJourney:
                 ok += 1
                 self.last_out_dir = os.path.dirname(dest)
                 result = {"before": r["before"], "after": after, "info": r["info"]}
-                details = describe(result) + " · " + t.settings(ceiling).describe()
+                details = f"{after.lufs:.1f} LUFS · peak {after.true_peak:.1f} dBTP · details below"
+                report = master_report(result, t.settings(ceiling), fmt, ceiling)
                 done = f"saved · {after.lufs:.1f} LUFS"
                 app.post(
-                    lambda s=t, d=details, o=dest, x=done: (
-                        feed.song(s.name, "mastered", d, saved=o),
+                    lambda s=t, d=details, o=dest, x=done, rep=report: (
+                        feed.details(feed.song(s.name, "mastered", d, saved=o), rep),
                         self._status(s, x, "ok", saved=o),
                         app.master_page.mark_saved(s, self.sigs[id(s)]),
                     )

@@ -87,7 +87,9 @@ def tone_filters(tones):
     fx = []
     for freq, excess in tones:
         if excess >= STRONG_TONE_DB:
-            fx.append(PeakFilter(cutoff_frequency_hz=freq, gain_db=-min(excess, 30.0), q=30.0))
+            # very narrow, but never narrower than about 4 Hz, so a low tone that's a hair off still lands
+            q = min(30.0, max(8.0, freq / 4.0))
+            fx.append(PeakFilter(cutoff_frequency_hz=freq, gain_db=-min(excess, 30.0), q=q))
         else:
             fx.append(PeakFilter(cutoff_frequency_hz=freq, gain_db=-min(excess, 8.0), q=10.0))
         if tone_kind(freq) == "hum" and freq < 70:  # hum comes with harmonics; catch the next two

@@ -48,6 +48,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - ▶️ **Fair before/after**: hear the loudest 20 seconds of the original and the master at the same loudness
 - 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
 - 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** gives an album one sound
+- 📋 **A report for every master**: History shows each song's clipping, true peak, loudness, punch, and what cleanup removed (hiss, hum and whine, harsh highs)
 - ✅ **Always know where you stand**: each song shows when it's saved, and says *changed · master again* if you tweak it afterwards
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
@@ -95,10 +96,10 @@ Everything happens on the **Master** page, top to bottom:
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
 3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match). **Apply to all songs** copies the sound to the rest.
-4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays.
+4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-**History** lists everything Check, Before/After and Master did; double-click a saved song to open its folder.
+**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, and what cleanup removed. Double-click a saved song to open its folder.
 
 **Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 

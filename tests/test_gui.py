@@ -259,7 +259,7 @@ def test_master_saves_every_song(app, monkeypatch, copies, tmp_path):
     assert status(app) == "Done: 2 of 3 mastered"
     assert "disabled" not in app.action.open_btn.state()
     feed = app.activity.as_text()
-    assert "Master 3 songs" in feed and "2 of 3 saved" in feed and "notched 60 Hz" in feed
+    assert "Master 3 songs" in feed and "2 of 3 saved" in feed and "60 Hz, 120 Hz" in feed
 
 
 def test_master_reuses_the_preview_render(app, monkeypatch, copies):
@@ -396,3 +396,83 @@ def test_reference_keeps_tone_off_after_unlock(app, monkeypatch, copies):
     wait(app)
     page(app)._play(0, "after")  # stop
     assert "disabled" in page(app).card.tone_box.state()  # still off: the reference sets the tone
+
+
+def test_history_shows_a_breakdown_under_each_mastered_song(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["messy"]])
+    page(app).tracks[0].denoise = 40
+    app.masterer.start()
+    wait(app, 120)
+    feed = app.activity.as_text()
+    for line in (
+        "Clipping | none ✓",
+        "True peak |",
+        "under the -1 dBTP ceiling",
+        "Loudness | -14",
+        "Punch |",
+        "Hiss | reduced 40%",
+        "Hum and whine | removed",
+        "7,400 Hz",
+        "File | WAV 24-bit",
+    ):
+        assert line in feed, line
+    # the breakdown sits under the song, which is opened to show it
+    tree = app.activity.tree
+    action = tree.get_children()[0]
+    song = tree.get_children(action)[0]
+    assert tree.item(song, "open") and len(tree.get_children(song)) >= 7
+
+
+def test_breakdown_flags_what_was_found_but_not_fixed(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["hiss"]])
+    app.masterer.start()
+    wait(app, 120)
+    assert "Hiss | found, not reduced | try Noise reduction around 40%" in app.activity.as_text()
+
+
+# ---- text is never clipped by the next column
+def test_history_text_never_runs_under_the_next_column(app, monkeypatch, copies, tmp_path):
+    long = tmp_path / "Burning Down The Back Roads Of Simcoe County (Acoustic Demo, Take 4).wav"
+    shutil.copy(copies["messy"], long)
+    add(app, monkeypatch, [str(long)])
+    app.masterer.start()
+    wait(app, 120)
+    app.show_page("history")
+    app.root.update()
+    log = app.activity
+    log._fit_columns()
+    tree = log.tree
+    shortened = 0
+
+    def check(item, depth):
+        nonlocal shortened
+        font = log._font_for(item)
+        assert font.measure(tree.item(item, "text")) + 20 * (depth + 1) <= tree.column("#0", "width") + 2
+        for col, value in zip(log.COLUMNS, tree.item(item, "values"), strict=False):
+            if value:
+                assert font.measure(str(value)) <= tree.column(col, "width"), (col, value)
+        full, _ = log._full(item)
+        if tree.item(item, "text") != full:
+            assert tree.item(item, "text").endswith("…")
+            shortened += 1
+        for child in tree.get_children(item):
+            check(child, depth + 1)
+
+    for item in tree.get_children():
+        check(item, 0)
+    assert shortened >= 1  # the long name was shortened to fit...
+    assert long.name in log.as_text()  # ...but the full name is kept (hover shows it)
+    assert not log.xscroll.winfo_ismapped()  # and the table still fits without scrolling sideways
+
+
+def test_long_song_names_fit_or_end_in_an_ellipsis(app, monkeypatch, copies, tmp_path):
+    long = tmp_path / ("A Very Long Song Title That Goes On And On - Final Mix Version Three (Remastered).wav")
+    shutil.copy(copies["clean"], long)
+    add(app, monkeypatch, [copies["clean"], str(long)])
+    app.root.update()
+    table = page(app).table
+    for r in table.rows:
+        shown = r["name"].cget("text")
+        assert table.name_font.measure(shown) <= table.song_width
+        assert shown == r["full_name"] or shown.endswith("…")
+    assert table.rows[0]["name"].cget("text") == "Clean Song.wav"  # short names are never shortened

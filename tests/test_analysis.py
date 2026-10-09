@@ -90,3 +90,23 @@ def test_reports_clipping():
     r = analyze(x, SR)
     assert r.clipped > 100
     assert r.findings()[0].startswith("Clipping")
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2, 3])
+@pytest.mark.parametrize("amp", [0.006, 0.01])
+def test_hum_is_found_on_the_exact_frequency_under_kick_and_bass(amp, seed):
+    """The test songs have a kick and a bass note within a few Hz of 60 Hz; the hum notch must still
+    land exactly on 60 and 120 (a narrow notch a few Hz off misses the hum)."""
+    from . import synth
+
+    tones = sorted(f for f, _ in find_tones(synth.song(hum=amp, seed=seed), SR))
+    assert tones == [60.0, 120.0]
+
+
+def test_50hz_hum_family():
+    from . import synth
+
+    x = synth.song()
+    t = np.arange(x.shape[1]) / SR
+    x = x + (0.006 * (np.sin(2 * np.pi * 50 * t) + 0.5 * np.sin(2 * np.pi * 100 * t))).astype(np.float32)
+    assert all(f % 50 == 0 for f, _ in find_tones(x, SR))

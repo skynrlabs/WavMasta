@@ -1,7 +1,6 @@
 # <img src="wavmasta/assets/icon-64.png" alt="" width="48" align="center"> WavMasta
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-[![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/WavMasta/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/WavMasta/actions/workflows/test.yml)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)

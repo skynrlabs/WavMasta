@@ -8,6 +8,7 @@ from ...config import AUDIO_EXTENSIONS
 from ..model import Track
 from ..sound_card import SoundCard
 from ..tracks_table import TracksTable
+from ..waveform import WaveformCard
 from ..widgets import card
 
 CHANGED = "changed · master again"
@@ -41,7 +42,9 @@ class MasterPage(ttk.Frame):
         self.busy = False
         self.playing = False
         self.on_lock = None  # app hook: called with True/False when listening starts or stops
+        self.on_sound_change = None  # app hook: a setting changed (the waveform may be out of date)
         self._build_tracks(fonts)
+        self.wave = WaveformCard(self, 1, fonts)
         self.card = SoundCard(
             self,
             fonts,
@@ -50,8 +53,8 @@ class MasterPage(ttk.Frame):
             on_suggest=on_suggest,
             on_change=self.refresh_staleness,
         )
-        self.card.grid(row=1, column=0, sticky="nsew", pady=(0, 12))
-        self.rowconfigure(2, weight=1)
+        self.card.grid(row=2, column=0, sticky="nsew", pady=(0, 12))
+        self.rowconfigure(3, weight=1)
         # the save format, folder and ceiling also decide what a saved master contains
         for var in (settings_page.format_var, settings_page.ceiling_var, settings_page.out_text):
             var.trace_add("write", lambda *_: self.refresh_staleness())
@@ -65,6 +68,10 @@ class MasterPage(ttk.Frame):
         self.clear_btn.pack(side="right")
         self.add_btn = ttk.Button(c.top, text="Add songs...", style="Small.TButton", command=self.add_files)
         self.add_btn.pack(side="right", padx=(0, 6))
+        self.album_var = tk.BooleanVar(value=False)
+        self.album_check = ttk.Checkbutton(c.top, text="Album mode", variable=self.album_var, style="Card.TCheckbutton")
+        self.album_check.pack(side="right", padx=(0, 14))
+        self.album_var.trace_add("write", lambda *_: self._album_changed())
         self.table = TracksTable(c, fonts, on_select=self.select, on_play=self._play, on_remove=self.remove)
         self.table.grid(row=1, column=0, columnspan=3, sticky="ew")
 
@@ -138,14 +145,40 @@ class MasterPage(ttk.Frame):
             if self.on_lock:
                 self.on_lock(playing)
 
+    # ---- album mode
+    def album_on(self):
+        """Album mode only means something with two or more songs."""
+        return bool(self.album_var.get()) and len(self.tracks) >= 2
+
+    def album_key(self):
+        """Which songs make up the album (changing the set changes every song's master)."""
+        return (
+            tuple(sorted(os.path.normcase(os.path.abspath(t.path)) for t in self.tracks)) if self.album_on() else None
+        )
+
+    def _album_changed(self):
+        self._show_count()
+        self.refresh_staleness()
+        self.on_change()
+
+    def _show_count(self):
+        n = len(self.tracks)
+        if not n:
+            self.count_hint.set("")
+        elif self.album_on():
+            self.count_hint.set(f"{n} songs · mastered as one album: matched tone and loudness")
+        else:
+            self.count_hint.set(f"{n} song{'s' if n != 1 else ''} · each with its own sound")
+
     def refresh(self, select=None):
         """Rebuild the rows after songs were added or removed."""
         if select is None and self.tracks:
             select = 0
         self.table.set_tracks(self.tracks, select)
         n = len(self.tracks)
-        self.count_hint.set(f"{n} song{'s' if n != 1 else ''} · each with its own sound" if n else "")
+        self._show_count()
         self.select(select if n else None)
+        self.refresh_staleness()  # in album mode, adding or removing a song changes the others
 
     def selected_track(self):
         if self.selected is None or not self.tracks:
@@ -166,7 +199,7 @@ class MasterPage(ttk.Frame):
     def signature(self, track):
         """Everything that decides what a song's master contains."""
         sp = self.settings_page
-        return (track.sound(), sp.format_var.get(), sp.ceiling_var.get(), sp.out_text.get())
+        return (track.sound(), sp.format_var.get(), sp.ceiling_var.get(), sp.out_text.get(), self.album_key())
 
     def mark_saved(self, track, sig):
         track.saved_sig = sig
@@ -174,6 +207,8 @@ class MasterPage(ttk.Frame):
 
     def refresh_staleness(self):
         """Saved songs whose settings changed since saving say so; changing back restores 'saved'."""
+        if self.on_sound_change:
+            self.on_sound_change()
         for t in self.tracks:
             if t.saved_sig is None or t.status_kind == "busy":
                 continue
@@ -199,7 +234,7 @@ class MasterPage(ttk.Frame):
         self.table.set_enabled(not locked, keep_listening=self.playing and not self.busy)
         note = "locked while playing · press Stop or Esc to change" if self.playing and not self.busy else ""
         self.card.set_enabled(not locked, note)
-        for b in (self.add_btn, self.clear_btn):
+        for b in (self.add_btn, self.clear_btn, self.album_check):
             b.state(["!disabled"] if not locked else ["disabled"])
 
     def reset(self):

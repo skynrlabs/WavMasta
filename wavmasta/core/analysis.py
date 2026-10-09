@@ -10,11 +10,15 @@ import numpy as np
 from scipy.ndimage import median_filter
 from scipy.signal import stft, welch
 
+from .deess import SIBILANT_DB
+
 SILENCE_DB = -70.0  # frames quieter than this are digital silence (gaps, fades), not noise
 FIZZY_DB = -12.0  # top-end ratio above this sounds fizzy; around -20 is typical
 NATURAL_TOP_DB = -14.0  # where Tame harsh highs aims to bring a fizzy song
 SHELF_EFFECT = 0.9  # each dB of Tame harsh highs lowers the top-end ratio by about this much (measured)
 MAX_TAME_DB = 6.0  # the slider's range
+SUGGESTED_FADE = 3.0  # seconds of fade-out suggested for a song that stops dead
+SILENCE_WORTH_TRIMMING = 1.0  # seconds; less is just the end of a fade or a breath before the downbeat
 
 
 def _k_filter(sr):
@@ -32,6 +36,12 @@ def _k_filter(sr):
     hp_b = np.array([1.0, -2.0, 1.0])
     hp_a = np.array([1.0, 2 * (k * k - 1) / (1 + k / q + k * k), (1 - k / q + k * k) / (1 + k / q + k * k)])
     return np.vstack([np.concatenate([shelf_b, shelf_a]), np.concatenate([hp_b, hp_a])])
+
+
+def suggested_deess(sib):
+    from .deess import suggested_amount
+
+    return suggested_amount(sib)
 
 
 def lufs(audio, sr):
@@ -157,8 +167,11 @@ def find_tones(audio, sr, threshold_db=10.0, fmin=40, fmax=16000, max_n=6):
     # A hum or whine holds the same level the whole song; notes swell and fade. So the typical level
     # must sit close to the quietest level, or it's music and must not be notched.
     steady = (p50 - p10) < 6.0
+    # ...and loud enough to hear: within 55 dB of the song's strongest content. A leftover that's
+    # been notched to far below the music is no longer a problem, however clean its surroundings.
+    audible = p10 > np.max(p50) - 55
     band = (freqs >= fmin) & (freqs <= fmax)
-    idx = np.where(band & steady & (excess > threshold_db))[0]
+    idx = np.where(band & steady & audible & (excess > threshold_db))[0]
     groups, cur = [], []
     for i in idx:
         if cur and i != cur[-1] + 1:
@@ -265,6 +278,10 @@ class Report:
     quiet_flatness: float | None
     top_end: float
     tones: list = field(default_factory=list)
+    lead_silence: float = 0.0  # seconds of silence before the music starts
+    tail_silence: float = 0.0  # ...and after it ends
+    abrupt_end: bool = False  # stops while still loud, with no fade
+    sibilance: float = float("-inf")  # how harsh the 's' sounds are (deess.sibilance_db)
 
     @property
     def hiss(self):
@@ -308,6 +325,14 @@ class Report:
             n = self.tame_amount
             most = " (its strongest setting)" if n >= MAX_TAME_DB else ""
             out.append(f"Fizzy, harsh top end. Try Tame harsh highs at -{n:g} dB{most}.")
+        if self.sibilance >= SIBILANT_DB:
+            out.append(f"Sharp 's' sounds in the vocal. Try De-ess at {suggested_deess(self.sibilance)}%.")
+        edges_ = ((self.lead_silence, "start"), (self.tail_silence, "end"))
+        silence = [f"{s:.1f} s at the {where}" for s, where in edges_ if s > SILENCE_WORTH_TRIMMING]
+        if silence:
+            out.append(f"Silence: {' and '.join(silence)}. Trim silence takes it off.")
+        if self.abrupt_end:
+            out.append(f"The song stops suddenly at the end. Try a {SUGGESTED_FADE:g} s fade-out.")
         if not out:
             out.append("No noise problems found. Pick a tone and loudness and master it.")
         return out
@@ -319,6 +344,12 @@ class Report:
             s["fix_tones"] = True
         if self.fizzy:  # only ever suggested when it's needed; a setting you chose yourself is left alone
             s["tame_top"] = self.tame_amount
+        if self.sibilance >= SIBILANT_DB:
+            s["deess"] = suggested_deess(self.sibilance)
+        if max(self.lead_silence, self.tail_silence) > SILENCE_WORTH_TRIMMING:
+            s["trim"] = True
+        if self.abrupt_end:
+            s["fade_out"] = SUGGESTED_FADE
         return s
 
     def summary(self):
@@ -326,7 +357,11 @@ class Report:
 
 
 def analyze(audio, sr):
+    from . import edges
+    from .deess import sibilance_db
+
     song = lufs(audio, sr)
+    lead, tail = edges.silence_at_edges(audio, sr)
     level, flatness = quiet_passages(audio, sr)
     rel = None if level is None or not np.isfinite(song) else level - song
     return Report(
@@ -339,4 +374,8 @@ def analyze(audio, sr):
         quiet_flatness=flatness,
         top_end=top_end_ratio_db(audio, sr),
         tones=find_tones(audio, sr),
+        lead_silence=lead,
+        tail_silence=tail,
+        abrupt_end=edges.ends_abruptly(audio, sr),
+        sibilance=sibilance_db(audio, sr),
     )

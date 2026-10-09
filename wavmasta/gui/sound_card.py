@@ -11,7 +11,7 @@ from tkinter import filedialog, ttk
 
 from ..config import AUDIO_EXTENSIONS, LOUDNESS, TONE_HINTS, TONES
 from .theme import THEME as T
-from .widgets import slider
+from .widgets import slider, title_row
 
 SLIDER = 140
 
@@ -36,23 +36,23 @@ class SoundCard(ttk.Frame):
         self._loading = False
         self.columnconfigure(0, weight=1)
 
-        top = ttk.Frame(self, style="Card.TFrame")
+        top = title_row(self, "Sound", upper=False)
         top.grid(row=0, column=0, sticky="ew", pady=(0, 6))
         self.title = tk.StringVar(value="Sound")
-        ttk.Label(top, textvariable=self.title, style="Head.TLabel").pack(side="left")
+        top.label.configure(textvariable=self.title)
         self.hint = tk.StringVar()
         ttk.Label(top, textvariable=self.hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.apply_btn = ttk.Button(top, text="Apply to all songs", style="Small.TButton", command=on_apply_all)
         self.apply_btn.pack(side="right")
 
-        self.body = ttk.Frame(self, style="Card.TFrame")
+        self.body = ttk.Frame(self, style="Inner.TFrame")
         self.body.grid(row=1, column=0, sticky="nsew")
         self.body.columnconfigure(0, weight=1, uniform="half")
         self.body.columnconfigure(1, weight=1, uniform="half")
         self.empty = ttk.Label(self, text="Add a song to choose how it's mastered.", style="Muted.TLabel")
 
-        self._build_master(ttk.Frame(self.body, style="Card.TFrame"))
-        self._build_cleanup(ttk.Frame(self.body, style="Card.TFrame"), fonts, on_analyze, on_suggest)
+        self._build_master(ttk.Frame(self.body, style="Inner.TFrame"))
+        self._build_cleanup(ttk.Frame(self.body, style="Inner.TFrame"), fonts, on_analyze, on_suggest)
         self.show(None)
 
     # ---- layout helpers
@@ -62,11 +62,13 @@ class SoundCard(ttk.Frame):
 
     @staticmethod
     def _section(parent, text):
-        ttk.Label(parent, text=text, style="Muted.TLabel").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
+        ttk.Label(parent, text=text, style="Section.TLabel").grid(
+            row=0, column=0, columnspan=2, sticky="w", pady=(0, 4)
+        )
 
     def _slider_row(self, parent, r, label, var, lo, hi, step, text_var, on_move):
         self._label(parent, r, label)
-        f = ttk.Frame(parent, style="Card.TFrame")
+        f = ttk.Frame(parent, style="Inner.TFrame")
         f.grid(row=r, column=1, sticky="w")
         slider(f, var, lo, hi, step, on_move, length=SLIDER).pack(side="left")
         ttk.Label(f, textvariable=text_var, style="Value.TLabel").pack(side="left", padx=(10, 0))
@@ -77,7 +79,7 @@ class SoundCard(ttk.Frame):
         self._section(f, "MASTERING")
         self.tone_var = tk.StringVar(value="Neutral")
         self._label(f, 1, "Tone")
-        tone = ttk.Frame(f, style="Card.TFrame")
+        tone = ttk.Frame(f, style="Inner.TFrame")
         tone.grid(row=1, column=1, sticky="w")
         self.tone_box = ttk.Combobox(tone, textvariable=self.tone_var, values=list(TONES), state="readonly", width=14)
         self.tone_box.pack(side="left")
@@ -97,7 +99,7 @@ class SoundCard(ttk.Frame):
         self._slider_row(f, 5, "Stereo width", self.width_var, 50, 150, 5, self.width_text, lambda v: self._store())
 
         self._label(f, 6, "Reference")
-        ref = ttk.Frame(f, style="Card.TFrame")
+        ref = ttk.Frame(f, style="Inner.TFrame")
         ref.grid(row=6, column=1, sticky="w")
         self.ref_btn = ttk.Button(ref, text="Choose...", style="Small.TButton", command=self.pick_reference)
         self.ref_btn.pack(side="left")
@@ -120,7 +122,7 @@ class SoundCard(ttk.Frame):
         ttk.Checkbutton(f, text="Remove steady hum and whine (found automatically)", variable=self.hum_var).grid(
             row=3, column=0, columnspan=2, sticky="w", pady=(4, 6)
         )
-        btns = ttk.Frame(f, style="Card.TFrame")
+        btns = ttk.Frame(f, style="Inner.TFrame")
         btns.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 4))
         self.check_btn = ttk.Button(btns, text="Check this song", style="Small.TButton", command=on_analyze)
         self.check_btn.pack(side="left")

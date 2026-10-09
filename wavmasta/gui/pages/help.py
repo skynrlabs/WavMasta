@@ -113,7 +113,7 @@ class HelpPage(ttk.Frame):
         text.configure(yscrollcommand=scroll.set)
         text.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
-        text.tag_configure("h", font=F["h"], foreground=T["accent"], spacing1=12, spacing3=4)
+        text.tag_configure("h", font=F["big"], foreground=T["accent_soft"], spacing1=14, spacing3=4)
         text.tag_configure("p", foreground=T["text"], lmargin1=4, lmargin2=4)
         text.tag_configure("k", foreground=T["muted"], lmargin1=4, font=F["body"])
         for tag, line in HELP_TEXT:

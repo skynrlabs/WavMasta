@@ -10,7 +10,7 @@
 > Hiss, hum and harsh highs out. Streaming-ready loudness in.
 
 <p>
-  <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-8b5cf6?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
 </p>
 
 Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/wavmasta) if it saves you time.

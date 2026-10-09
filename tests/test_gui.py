@@ -107,7 +107,7 @@ def test_add_songs_and_folder(app, monkeypatch, copies, tmp_path):
     add(app, monkeypatch, [copies["clean"], copies["hum"]])
     assert len(page(app).tracks) == 2
     assert app.action.master_btn.cget("text") == "Master 2 songs"
-    assert app.sidebar.items["master"][1].cget("text") == "Master  (2)"
+    assert app.nav.items["master"][1].cget("text") == "Master  (2)"
     # adding the same file again does nothing; a folder adds what's new in it
     added = page(app).add_paths([copies["clean"], os.path.dirname(copies["clean"])])
     assert added == len(copies) - 2

@@ -255,7 +255,7 @@ class PreviewJourney:
         self.player.stop()
         self.token = None
         self.app.master_page.set_playing(None)
-        self.app.say("Stopped", detail="Press Before or After on a song to hear it again")
+        self.app.say("Stopped", detail="Press Before or After to hear it again")
 
 
 def describe_preview(r):

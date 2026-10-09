@@ -222,6 +222,7 @@ class WavMastaApp:
         first time), with the master over it once Before/After or Master has made one."""
         page = self.master_page
         track = page.selected_track()
+        page.card.set_heard("new")
         if track is None:
             page.wave.show(None)
             return
@@ -239,13 +240,10 @@ class WavMastaApp:
             return
         ceiling, err = self.settings_page.ceiling()
         current = (track.path, mtime, track.sound(), ceiling, page.album_key())
-        page.wave.show(
-            dict(
-                wave,
-                ceiling=10 ** (ceiling / 20) if not err else None,
-                stale=wave.get("after") is not None and wave.get("key") != current,
-            )
-        )
+        changed = wave.get("after") is not None and wave.get("key") != current
+        page.wave.show(dict(wave, ceiling=10 ** (ceiling / 20) if not err else None, stale=changed))
+        heard = wave.get("window") is not None  # only Before/After sets the stretch you listened to
+        page.card.set_heard("changed" if heard and changed else "current" if heard else "new")
 
     def _read_waveform(self, track, mtime):
         from ..core import envelope, load
@@ -297,7 +295,7 @@ class WavMastaApp:
     def blocked_by_playback(self):
         """True (and says why) if a change is attempted while Before/After is playing."""
         if self.master_page.playing:
-            self.say("Stop playback first", "warn", "Press Stop on the song, or Esc, then change its sound")
+            self.say("Stop playback first", "warn", "Press Stop under Hear, or Esc, then change its sound")
             return True
         return False
 

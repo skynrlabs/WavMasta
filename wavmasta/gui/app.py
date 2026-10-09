@@ -71,14 +71,19 @@ class WavMastaApp:
         card = self.master_page.card
         card.empty.grid_remove()  # measure with a song's Sound card showing, as it is in use,
         card.body.grid()  # including a few lines of Check findings
-        card.findings.configure(text="\n".join(["Now: -20.0 LUFS · peak -4.0 dBTP"] + ["• finding"] * 5))
+        from types import SimpleNamespace
+
+        sample = "Steady whine at 3,150 Hz (50 dB above its surroundings). Remove hum and whine will notch it out."
+        card.show_report(  # a typical Check result, so the window is tall enough for it
+            SimpleNamespace(lufs=-20.0, true_peak=-4.0, findings=lambda: [sample] * 3, suggested=lambda: {})
+        )
         for _ in range(3):  # sizes settle from the inside out, one layout pass per level
             root.update_idletasks()
         # ask for the full height once (plus a little room for long findings)
         self.area.canvas.configure(height=self.area.needed_height() + px(root, 24))
         for _ in range(3):
             root.update_idletasks()
-        card.show(card.track)
+        card.show(card.track)  # back to the real (empty) card
         sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
         scale = float(root.tk.call("tk", "scaling")) / (96 / 72)  # 1.0 at 100% display scaling
         w = min(max(root.winfo_reqwidth(), int(1100 * scale)), sw - 40)

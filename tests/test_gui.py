@@ -187,7 +187,7 @@ def test_check_finds_problems_and_suggestions_apply(app, monkeypatch, copies):
     wait(app)
     t = page(app).tracks[0]
     assert t.report is not None
-    text = page(app).card.findings.cget("text")
+    text = page(app).card.findings_text()
     assert "Hiss" in text and "7,400 Hz" in text
     assert "to fix" in status(app)
     assert page(app).card.suggest_btn.winfo_manager()  # Use suggestions is showing
@@ -476,3 +476,22 @@ def test_long_song_names_fit_or_end_in_an_ellipsis(app, monkeypatch, copies, tmp
         assert table.name_font.measure(shown) <= table.song_width
         assert shown == r["full_name"] or shown.endswith("…")
     assert table.rows[0]["name"].cget("text") == "Clean Song.wav"  # short names are never shortened
+
+
+def test_check_results_bubble_colours_each_finding(app, monkeypatch, copies):
+    from wavmasta.gui.theme import THEME
+
+    add(app, monkeypatch, [copies["messy"]])
+    app.checker.start()
+    wait(app)
+    box = page(app).card.bubble.inner
+    dots = [w.cget("fg") for w in box.winfo_children() if isinstance(w, tk.Label) and w.cget("text") == "●"]
+    assert dots and set(dots) == {THEME["warn"]}  # hiss, whine and fizz: all worth fixing
+    text = page(app).card.findings_text()
+    assert "CHECK RESULTS" in text and "LUFS" in text
+    assert "Try Noise reduction around 40%." in text  # the tip, on its own line in violet
+
+
+def test_bubble_before_check_invites_you_to_check(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"]])
+    assert "Check this song to measure it" in page(app).card.findings_text()

@@ -12,7 +12,7 @@ from tkinter import filedialog, ttk
 from ..config import AUDIO_EXTENSIONS, LOUDNESS, TONE_HINTS, TONES
 from .theme import THEME as T
 from .theme import px
-from .widgets import slider, title_row
+from .widgets import Bubble, slider, title_row
 
 SLIDER = 140
 
@@ -132,18 +132,11 @@ class SoundCard(ttk.Frame):
         btns.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 4))
         self.check_btn = ttk.Button(btns, text="Check this song", style="Small.TButton", command=on_analyze)
         self.check_btn.pack(side="left")
-        self.suggest_btn = ttk.Button(btns, text="Use suggestions", style="Small.TButton", command=on_suggest)
-        self.findings = tk.Label(
-            f,
-            text="",
-            bg=T["card"],
-            fg=T["muted"],
-            font=fonts["small"],
-            justify="left",
-            anchor="nw",
-            wraplength=px(f, 370),
-        )
-        self.findings.grid(row=5, column=0, columnspan=2, sticky="nw")
+        self.suggest_btn = ttk.Button(btns, text="✦ Use suggestions", style="Pink.TButton", command=on_suggest)
+        # Check results: a rounded bubble under the buttons, one coloured line per finding
+        self.fonts = fonts
+        self.bubble = Bubble(f)
+        self.bubble.grid(row=5, column=0, columnspan=2, sticky="nw", pady=(6, 0))
 
     # ---- showing a song
     def show(self, track, count=0):
@@ -178,16 +171,71 @@ class SoundCard(ttk.Frame):
         self.show_report(track.report)
 
     def show_report(self, report):
+        """Fill the Check results bubble: a heading with the song's loudness and peak, then a line per
+        finding with a coloured dot (red: can't be fixed, amber: worth fixing, green: all clear) and
+        the tip in violet."""
+        box = self.bubble.inner
+        for w in box.winfo_children():
+            w.destroy()
+        F, fill, wrap = self.fonts, self.bubble.fill, px(box, 330)
+        box.columnconfigure(0, weight=0)
+        box.columnconfigure(1, weight=1)  # a wide heading widens the text column, not the dots
         if report is None:
-            self.findings.configure(text="Check this song to measure it and find hiss, hum or harsh highs.")
+            tk.Label(box, text="✦", bg=fill, fg=T["accent_soft"], font=F["btn"]).grid(row=0, column=0, sticky="nw")
+            tk.Label(
+                box,
+                text="Check this song to measure it and find hiss, hum or harsh highs.",
+                bg=fill, fg=T["muted"], font=F["small"], justify="left", wraplength=wrap,
+            ).grid(row=0, column=1, sticky="w", padx=(8, 0))  # fmt: skip
             self.suggest_btn.pack_forget()
+            self.bubble._fit()
+            self.bubble.refit()
             return
-        lines = [f"Now: {report.summary()}"] + ["• " + line for line in report.findings()]
-        self.findings.configure(text="\n".join(lines))
+        head = tk.Frame(box, bg=fill)
+        head.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        tk.Label(head, text="CHECK RESULTS", bg=fill, fg=T["accent_soft"], font=F["small"]).pack(side="left")
+        tk.Label(head, text=f"  {report.lufs:.1f} LUFS", bg=fill, fg=T["text"], font=F["btn"]).pack(side="left")
+        tk.Label(head, text=f"  ·  peak {report.true_peak:.1f} dBTP", bg=fill, fg=T["text"], font=F["small"]).pack(
+            side="left"
+        )
+        for i, line in enumerate(report.findings(), start=1):
+            if line.startswith("No noise problems"):
+                color = T["ok"]
+            elif line.startswith("Clipping"):
+                color = T["bad"]
+            else:
+                color = T["warn"]
+            what, _, tip = line.partition(". ")
+            tk.Label(box, text="●", bg=fill, fg=color, font=F["small"]).grid(row=i, column=0, sticky="nw", pady=(1, 0))
+            cell = tk.Frame(box, bg=fill)
+            cell.grid(row=i, column=1, sticky="w", padx=(8, 0), pady=(0, 3))
+            tk.Label(
+                cell, text=what + ("." if tip else ""), bg=fill, fg=T["text"], font=F["small"], justify="left",
+                wraplength=wrap,
+            ).pack(anchor="w")  # fmt: skip
+            if tip:
+                tk.Label(
+                    cell, text=tip, bg=fill, fg=T["accent_soft"], font=F["small"], justify="left", wraplength=wrap
+                ).pack(anchor="w")
         if self.track is not None and any(getattr(self.track, k) != v for k, v in report.suggested().items()):
             self.suggest_btn.pack(side="left", padx=(8, 0))
         else:
             self.suggest_btn.pack_forget()
+        self.bubble._fit()
+        self.bubble.refit()
+
+    def findings_text(self):
+        """Everything the Check results bubble says, as plain text (for tests and copying)."""
+        out = []
+
+        def walk(w):
+            for c in w.winfo_children():
+                if isinstance(c, tk.Label) and c.cget("text") not in ("●", "✦"):
+                    out.append(c.cget("text"))
+                walk(c)
+
+        walk(self.bubble.inner)
+        return "\n".join(out)
 
     def _refresh_texts(self):
         t = self.track

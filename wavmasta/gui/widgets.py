@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from .theme import THEME as T
-from .theme import GradientLine
+from .theme import GradientLine, px
 
 
 def title_row(parent, title, hint=None, upper=True):
@@ -42,7 +42,7 @@ def slider(parent, var, lo, hi, step, command=None, length=260):
         resolution=step,
         variable=var,
         orient="horizontal",
-        length=length,
+        length=px(parent, length),
         showvalue=False,
         command=command,
         bg=T["accent"],
@@ -54,3 +54,59 @@ def slider(parent, var, lo, hi, step, command=None, length=260):
         sliderlength=18,
         width=10,
     )
+
+
+class ScrollArea(ttk.Frame):
+    """Holds the pages. When the window is too short for a page (small screens, or Windows display
+    scaling at 125-150%), a scrollbar appears instead of the page being squashed or cut off.
+    When there's room, pages fill the whole height as usual."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.canvas = tk.Canvas(self, bg=T["bg"], highlightthickness=0, bd=0)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.scroll = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scroll.set)
+        self.inner = ttk.Frame(self.canvas)
+        self._win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
+        self.canvas.bind("<Configure>", lambda e: self._fit())
+        self.inner.bind("<Configure>", lambda e: self._fit())
+        self.scrolling = False
+        self.page = None  # the page on screen; only its height matters
+
+    def show(self, page):
+        self.page = page
+        self._fit()
+
+    def needed_height(self):
+        return (self.page or self.inner).winfo_reqheight()
+
+    def _fit(self):
+        w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
+        need = self.needed_height()
+        self.scrolling = need > h + 1
+        height = need if self.scrolling else h
+        self.canvas.itemconfigure(self._win, width=max(1, w), height=max(1, height))
+        self.canvas.configure(scrollregion=(0, 0, w, height))
+        if self.scrolling:
+            self.scroll.grid(row=0, column=1, sticky="ns", padx=(6, 0))
+        else:
+            self.scroll.grid_remove()
+            self.canvas.yview_moveto(0)
+
+    def wheel(self, event):
+        """Scroll the page with the mouse wheel, unless the pointer is over something that scrolls itself."""
+        if not self.scrolling:
+            return
+        w = event.widget
+        try:
+            if w.winfo_class() in ("Text", "Treeview", "Canvas") and w is not self.canvas:
+                return
+            if any(str(w).startswith(str(s)) for s in getattr(self, "skip", ())):
+                return
+        except (AttributeError, tk.TclError):
+            return
+        up = getattr(event, "num", 0) == 4 or getattr(event, "delta", 0) > 0
+        self.canvas.yview_scroll(-3 if up else 3, "units")

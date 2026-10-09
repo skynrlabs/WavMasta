@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 
 from ...config import DEFAULT_CEILING, DEFAULT_FORMAT, FORMATS, OUTPUT_SUFFIX, load_settings, save_settings
+from ..theme import px
 from ..widgets import card
 
 SAME_FOLDER = "Same folder as each song"
@@ -75,7 +76,7 @@ class SettingsPage(ttk.Frame):
             row, from_=-3.0, to=-0.1, increment=0.1, width=6, textvariable=self.ceiling_var, format="%.1f"
         ).pack(side="left")
         ttk.Label(row, text="dBTP", style="Card.TLabel").pack(side="left", padx=(8, 0))
-        ttk.Label(c, text=CEILING_HELP, style="Muted.TLabel", justify="left", wraplength=700).grid(
+        ttk.Label(c, text=CEILING_HELP, style="Muted.TLabel", justify="left", wraplength=px(c, 700)).grid(
             row=2, column=0, columnspan=3, sticky="w", pady=(10, 0)
         )
 

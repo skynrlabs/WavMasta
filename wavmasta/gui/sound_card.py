@@ -11,6 +11,7 @@ from tkinter import filedialog, ttk
 
 from ..config import AUDIO_EXTENSIONS, LOUDNESS, TONE_HINTS, TONES
 from .theme import THEME as T
+from .theme import px
 from .widgets import slider, title_row
 
 SLIDER = 140
@@ -105,7 +106,7 @@ class SoundCard(ttk.Frame):
         self.ref_btn.pack(side="left")
         self.ref_clear = ttk.Button(ref, text="Clear", style="Small.TButton", command=self.clear_reference)
         self.ref_text = tk.StringVar()
-        ttk.Label(f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=300, justify="left").grid(
+        ttk.Label(f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left").grid(
             row=7, column=1, sticky="w"
         )
 
@@ -119,7 +120,7 @@ class SoundCard(ttk.Frame):
         self._slider_row(f, 2, "Tame harsh highs", self.top_var, 0, 6, 0.5, self.top_text, lambda v: self._store())
         self.hum_var = tk.BooleanVar(value=True)
         self.hum_var.trace_add("write", lambda *_: self._store())
-        ttk.Checkbutton(f, text="Remove steady hum and whine (found automatically)", variable=self.hum_var).grid(
+        ttk.Checkbutton(f, text="Remove hum and whine, if Check finds any", variable=self.hum_var).grid(
             row=3, column=0, columnspan=2, sticky="w", pady=(4, 6)
         )
         btns = ttk.Frame(f, style="Inner.TFrame")
@@ -128,7 +129,14 @@ class SoundCard(ttk.Frame):
         self.check_btn.pack(side="left")
         self.suggest_btn = ttk.Button(btns, text="Use suggestions", style="Small.TButton", command=on_suggest)
         self.findings = tk.Label(
-            f, text="", bg=T["card"], fg=T["muted"], font=fonts["small"], justify="left", anchor="nw", wraplength=370
+            f,
+            text="",
+            bg=T["card"],
+            fg=T["muted"],
+            font=fonts["small"],
+            justify="left",
+            anchor="nw",
+            wraplength=px(f, 370),
         )
         self.findings.grid(row=5, column=0, columnspan=2, sticky="nw")
 

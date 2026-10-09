@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from .theme import THEME as T
+from .theme import px
 
 ROW_HEIGHT = 38
 VISIBLE_ROWS = 4
@@ -15,7 +16,7 @@ NAME_CHARS = 34
 
 def _columns(frame):
     for i, (_, width) in enumerate(COLUMNS):
-        frame.columnconfigure(i, minsize=width, weight=1 if width == 0 else 0)
+        frame.columnconfigure(i, minsize=px(frame, width), weight=1 if width == 0 else 0)
 
 
 def short_name(name):
@@ -43,7 +44,7 @@ class TracksTable(ttk.Frame):
                 row=0, column=i, sticky="w", padx=(6, 0) if i == 0 else 0
             )
 
-        self.canvas = tk.Canvas(self, bg=T["field"], highlightthickness=0, height=ROW_HEIGHT * 2)
+        self.canvas = tk.Canvas(self, bg=T["field"], highlightthickness=0, height=px(self, ROW_HEIGHT) * 2)
         self.canvas.grid(row=1, column=0, sticky="nsew")
         self.scroll = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scroll.set)
@@ -71,7 +72,7 @@ class TracksTable(ttk.Frame):
             row["frame"].destroy()
         self.rows = [self._make_row(i, t) for i, t in enumerate(tracks)]
         n = len(tracks)
-        self.canvas.configure(height=ROW_HEIGHT * min(max(n, 2), VISIBLE_ROWS))
+        self.canvas.configure(height=px(self, ROW_HEIGHT) * min(max(n, 2), VISIBLE_ROWS))
         if n > VISIBLE_ROWS:
             self.scroll.grid(row=1, column=1, sticky="ns")
         else:
@@ -88,7 +89,7 @@ class TracksTable(ttk.Frame):
 
     def _make_row(self, i, track):
         F = self.F
-        frame = tk.Frame(self.body, bg=T["field"], height=ROW_HEIGHT)
+        frame = tk.Frame(self.body, bg=T["field"], height=px(self, ROW_HEIGHT))
         frame.pack(fill="x")
         frame.grid_propagate(False)
         frame.rowconfigure(0, weight=1)

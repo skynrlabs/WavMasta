@@ -21,15 +21,9 @@ class ActionBar(ttk.Frame):
         self.master_btn.grid(row=0, column=2, sticky="e")
 
     def set_master_label(self, tracks):
-        """Say what Master will do: 'Master 4 songs' or 'Master My Song.wav'."""
-        if len(tracks) == 1:
-            name = tracks[0].name
-            name = name if len(name) <= 26 else name[:23] + "..."
-            text = f"Master {name}"
-        elif tracks:
-            text = f"Master {len(tracks)} songs"
-        else:
-            text = "Master"
+        """Say what Master will do: 'Master 1 song' or 'Master 4 songs' (short, so it never gets cut off)."""
+        n = len(tracks)
+        text = f"Master {n} song{'s' if n != 1 else ''}" if n else "Master"
         self.master_btn.configure(text=text)
 
     def set_where(self, fmt, folder_text):

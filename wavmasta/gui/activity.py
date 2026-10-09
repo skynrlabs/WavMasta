@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from .theme import THEME as T
+from .theme import px
 
 
 def describe(result):
@@ -44,11 +45,11 @@ class ActivityLog:
         tree.heading("result", text="Result", anchor="w")
         tree.heading("details", text="Details", anchor="w")
         tree.heading("saved", text="Saved as", anchor="w")
-        tree.column("#0", width=210, minwidth=140, stretch=False)
-        tree.column("time", width=52, minwidth=48, stretch=False)
-        tree.column("result", width=150, minwidth=110, stretch=False)
-        tree.column("details", width=240, minwidth=120, stretch=True)
-        tree.column("saved", width=170, minwidth=110, stretch=True)
+        tree.column("#0", width=px(tree, 210), minwidth=px(tree, 140), stretch=False)
+        tree.column("time", width=px(tree, 52), minwidth=px(tree, 48), stretch=False)
+        tree.column("result", width=px(tree, 150), minwidth=px(tree, 110), stretch=False)
+        tree.column("details", width=px(tree, 240), minwidth=px(tree, 120), stretch=True)
+        tree.column("saved", width=px(tree, 170), minwidth=px(tree, 110), stretch=True)
         scroll = ttk.Scrollbar(self.frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scroll.set)
         tree.grid(row=0, column=0, sticky="nsew")

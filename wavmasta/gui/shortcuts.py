@@ -1,4 +1,4 @@
-"""Keyboard shortcuts. (Navigation lives in the top bar, so there's no separate menu bar.)"""
+"""Keyboard shortcuts. (Navigation lives in the sidebar, so there's no separate menu bar.)"""
 
 from .pages import PAGES
 

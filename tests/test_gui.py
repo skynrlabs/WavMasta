@@ -742,3 +742,13 @@ def test_history_result_column_keeps_the_readings_whole(app, monkeypatch, copies
     for item in tree.get_children():
         walk(item)
     assert shortened == [], (log._widths, tree.winfo_width())
+
+
+def test_support_links_go_to_github_sponsors(app, monkeypatch):
+    import webbrowser
+
+    opened = []
+    monkeypatch.setattr(webbrowser, "open", lambda url, *a, **k: opened.append(url))
+    app.nav.support.event_generate("<Button-1>")
+    app.root.update()
+    assert opened == ["https://github.com/sponsors/skynrlabs"]

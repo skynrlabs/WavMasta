@@ -7,7 +7,9 @@ import sys
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(PACKAGE_DIR, "assets")
 REPO_URL = "https://github.com/skynrlabs/WavMasta"
-SUPPORT_URL = "https://skynrlabs.itch.io/wavmasta"  # "Support WavMasta" links in the app (pay what you want)
+SUPPORT_URL = (
+    "https://github.com/sponsors/skynrlabs"  # "Support WavMasta" links in the app: people here already have it
+)
 
 AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".aif", ".aiff", ".ogg", ".m4a")
 

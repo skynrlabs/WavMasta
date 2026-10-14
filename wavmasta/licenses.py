@@ -38,6 +38,13 @@ License.
 Many thanks to everyone who builds and maintains these libraries.
 """
 
+_KNOWN_TEXTS = (
+    ("Apache License", "Apache-2.0"),
+    ("GNU GENERAL PUBLIC LICENSE", "GPL"),
+    ("GNU LESSER GENERAL PUBLIC LICENSE", "LGPL"),
+    ("MIT License", "MIT"),
+    ("Permission is hereby granted, free of charge", "MIT"),
+)
 _LICENSE_NAME = re.compile(r"^(licen[cs]e|copying|notice|thirdpartynotices|license_notes)", re.IGNORECASE)
 
 
@@ -56,6 +63,15 @@ def _license_of(dist):
     text = (m.get("License") or "").strip()
     if text and "\n" not in text and len(text) <= 60:
         return text
+    for _, path in _license_files(dist):  # no metadata: recognise the license file itself
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                head = fh.read(2000)
+        except OSError:
+            continue
+        for marker, name in _KNOWN_TEXTS:
+            if marker in head:
+                return name
     return "see license text"
 
 

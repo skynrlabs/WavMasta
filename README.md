@@ -301,6 +301,12 @@ WavMasta is open-source software licensed under the **MIT License**. Copyright �
 
 You are free to use, modify, and distribute this software, including in commercial projects, as long as the copyright notice is kept. See [LICENSE](LICENSE) for full terms.
 
+### Third-party libraries
+
+WavMasta is built on [pedalboard](https://github.com/spotify/pedalboard) (GPL v3), [NumPy](https://numpy.org) and [SciPy](https://scipy.org) (BSD), and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT). The Windows app bundles these libraries, and because pedalboard is GPL v3, **the Windows app as a whole is distributed under the GPL v3**; this repository is its complete source. WavMasta's own code stays MIT.
+
+The Windows app installs every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Open-source licenses**. To write the file yourself: `python -m wavmasta.licenses --out THIRD_PARTY_LICENSES.txt`.
+
 ---
 
 Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/wavmasta) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)

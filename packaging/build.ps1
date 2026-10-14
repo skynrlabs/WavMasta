@@ -21,6 +21,11 @@ Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue
 pyinstaller --noconfirm packaging\wavmasta.spec
 Check ($LASTEXITCODE -eq 0) "PyInstaller failed"
 
+Step "Writing the open-source licenses"
+# Every bundled library's license, next to WavMasta.exe (the installer copies it; About shows it)
+python -m wavmasta.licenses --out dist\WavMasta\THIRD_PARTY_LICENSES.txt
+Check ($LASTEXITCODE -eq 0 -and (Select-String -Path dist\WavMasta\THIRD_PARTY_LICENSES.txt -Pattern "GNU GENERAL PUBLIC LICENSE" -Quiet)) "Couldn't write the licenses file"
+
 Step "Smoke test: master a song"
 $tmp = Join-Path $env:TEMP "wavmasta-build-test"
 Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

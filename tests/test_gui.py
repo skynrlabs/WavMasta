@@ -752,3 +752,23 @@ def test_support_links_go_to_github_sponsors(app, monkeypatch):
     app.nav.support.event_generate("<Button-1>")
     app.root.update()
     assert opened == ["https://github.com/sponsors/skynrlabs"]
+
+
+def test_about_opens_the_open_source_licenses(app):
+    from wavmasta.gui import dialogs
+
+    about = dialogs.show_about(app.root, app.fonts)
+    buttons = about.winfo_children()[0].winfo_children()[-1].winfo_children()  # the button row
+    next(b for b in buttons if b.cget("text") == "Open-source licenses").invoke()
+    app.root.update()
+    win = next(w for w in about.winfo_children() if isinstance(w, tk.Toplevel))
+    assert win.title() == "Open-source licenses"
+    text = win.text.get("1.0", "end")
+    assert "pedalboard" in text and "GPL v3" in text
+    assert str(win.text.cget("state")) == "disabled"  # read-only
+    close = next(b for b in win.winfo_children()[0].winfo_children() if isinstance(b, ttk.Button))
+    assert close.cget("text") == "Close"
+    close.invoke()
+    app.root.update()
+    assert not win.winfo_exists() and about.grab_current() is about  # back to the About box
+    about.destroy()

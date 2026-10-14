@@ -20,7 +20,8 @@ DisableProgramGroupPage=yes
 ; Installs for the current user without needing admin rights (users can still choose "all users").
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-LicenseFile=..\LICENSE
+; MIT for WavMasta's own code, plus why the Windows app as a whole is under the GPL v3
+LicenseFile=installer-license.txt
 OutputDir=..\dist\installer
 OutputBaseFilename=WavMasta-Setup-{#AppVersion}
 SetupIconFile=..\wavmasta\assets\wavmasta.ico

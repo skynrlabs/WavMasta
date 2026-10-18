@@ -341,6 +341,9 @@ class WavMastaApp:
 
     def open_path(self, d):
         """Show a folder in Explorer / Finder / the file manager."""
+        if not os.path.isdir(d):  # only ever open folders: startfile would run a program it's given
+            self.say("That folder isn't there any more", "warn", d)
+            return
         if IS_WINDOWS:
             os.startfile(d)
         elif sys.platform == "darwin":

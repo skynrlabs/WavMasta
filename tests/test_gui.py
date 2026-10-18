@@ -6,6 +6,8 @@ skipped automatically when no display is available.
 
 import os
 import shutil
+import stat
+import tempfile
 import time
 
 import pytest
@@ -28,6 +30,7 @@ def _display_available():
 if not _display_available():
     pytest.skip("no display available", allow_module_level=True)
 
+from wavmasta.gui import app as app_module  # noqa: E402
 from wavmasta.gui import journeys  # noqa: E402
 from wavmasta.gui.app import WavMastaApp  # noqa: E402
 from wavmasta.gui.pages import PAGES  # noqa: E402
@@ -772,3 +775,26 @@ def test_about_opens_the_open_source_licenses(app):
     app.root.update()
     assert not win.winfo_exists() and about.grab_current() is about  # back to the About box
     about.destroy()
+
+
+# ---- security: private preview files, only open folders
+
+
+def test_previews_go_to_a_private_folder(monkeypatch):
+    monkeypatch.setattr(journeys, "PREVIEW_DIR", None)
+    folder = journeys.preview_dir()
+    assert journeys.preview_dir() == folder  # one folder per run
+    assert os.path.isdir(folder) and folder != tempfile.gettempdir()
+    if os.name == "posix":
+        assert stat.S_IMODE(os.stat(folder).st_mode) == 0o700  # nobody else can plant a file there
+
+
+def test_open_path_only_opens_folders(app, tmp_path, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app_module.subprocess, "Popen", lambda args: opened.append(args))
+    not_a_folder = tmp_path / "Song - master.wav"
+    not_a_folder.write_bytes(b"RIFF")
+    app.open_path(str(not_a_folder))
+    assert opened == []
+    app.open_path(str(tmp_path))
+    assert opened == [["xdg-open", str(tmp_path)]]

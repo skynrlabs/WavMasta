@@ -529,6 +529,24 @@ def test_new_controls_edit_the_selected_song(app, monkeypatch, copies):
     assert card.deess_var.get() == 0 and card.trim_var.get() is True
 
 
+def test_keep_bass_centred_is_stored_suggested_and_reported(app, monkeypatch, copies, tmp_path):
+    from . import synth
+    from .test_lowend import wide_bass_mix
+
+    path = synth.write(tmp_path / "in" / "Wide Bass.wav", wide_bass_mix())
+    add(app, monkeypatch, [path])
+    card, t = page(app).card, page(app).tracks[0]
+    assert t.mono_bass is False and card.mono_bass_var.get() is False
+    app.checker.start()
+    wait(app)
+    assert "spread wide" in card.findings_text()
+    app.use_suggestions()
+    assert t.mono_bass is True and card.mono_bass_var.get() is True and t.settings(-1).mono_bass
+    app.masterer.start()
+    wait(app, 120)
+    assert "Bass | centred" in app.activity.as_text()
+
+
 def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):
     from . import synth
 
@@ -772,21 +790,3 @@ def test_about_opens_the_open_source_licenses(app):
     app.root.update()
     assert not win.winfo_exists() and about.grab_current() is about  # back to the About box
     about.destroy()
-
-
-def test_keep_bass_centred_is_stored_suggested_and_reported(app, monkeypatch, copies, tmp_path):
-    from . import synth
-    from .test_lowend import wide_bass_mix
-
-    path = synth.write(tmp_path / "in" / "Wide Bass.wav", wide_bass_mix())
-    add(app, monkeypatch, [path])
-    card, t = page(app).card, page(app).tracks[0]
-    assert t.mono_bass is False and card.mono_bass_var.get() is False
-    app.checker.start()
-    wait(app)
-    assert "spread wide" in card.findings_text()
-    app.use_suggestions()
-    assert t.mono_bass is True and card.mono_bass_var.get() is True and t.settings(-1).mono_bass
-    app.masterer.start()
-    wait(app, 120)
-    assert "Bass | centred" in app.activity.as_text()

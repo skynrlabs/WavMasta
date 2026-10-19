@@ -9,6 +9,7 @@ from ..core import Settings
 
 SOUND_FIELDS = (
     "tone", "loudness", "denoise", "fix_tones", "tame_top", "glue", "width", "reference", "deess", "fade_out", "trim",
+    "mono_bass",
 )  # fmt: skip
 
 
@@ -26,6 +27,7 @@ class Track:
     deess: int = 0
     fade_out: float = 0.0
     trim: bool = True
+    mono_bass: bool = False
     report: object = None  # the latest analysis.Report, once analysed
     status: str = "not mastered yet"
     status_kind: str = "muted"  # muted, busy, ok or warn
@@ -56,6 +58,7 @@ class Track:
             deess=self.deess,
             fade_out=self.fade_out,
             trim=self.trim,
+            mono_bass=self.mono_bass,
         )
 
     def reset(self):

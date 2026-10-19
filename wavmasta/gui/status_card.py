@@ -5,6 +5,7 @@ amber when something needs attention. A second, smaller line adds detail such as
 """
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
 from .theme import THEME as T
@@ -28,10 +29,13 @@ class StatusCard(tk.Frame):
             self, textvariable=self.status, bg=T["card"], fg=T["text"], font=fonts["status"], anchor="w"
         )
         self.msg_lbl.grid(row=0, column=1, sticky="ew", padx=(12, 14), pady=(10, 0))
-        self.detail_lbl = tk.Label(
-            self, textvariable=self.detail, bg=T["card"], fg=T["muted"], font=fonts["body"], anchor="w"
-        )
+        # width=1: the label asks for no width of its own, so a long detail never widens the window
+        self.detail_lbl = tk.Label(self, bg=T["card"], fg=T["muted"], font=fonts["body"], anchor="w", width=1)
+        self.detail_font = tkfont.Font(font=fonts["body"])
+        self.detail.trace_add("write", lambda *_: self._show_detail())
+        self.detail_lbl.bind("<Configure>", lambda e: self._show_detail())
         self.detail_lbl.grid(row=1, column=1, sticky="ew", padx=(12, 14), pady=(2, 10))
+        self.compact = False
         self.progress = ttk.Progressbar(
             self, mode="determinate", style="Horizontal.TProgressbar", length=px(parent, 260)
         )
@@ -56,10 +60,39 @@ class StatusCard(tk.Frame):
         if kind != "busy":
             self.stop_progress()
 
+    def _show_detail(self):
+        """The detail line, ending in '…' if it doesn't fit (it shares one line in compact mode)."""
+        from .tracks_table import fit_text
+
+        text = self.detail.get()
+        if self.compact:
+            room = self.detail_lbl.winfo_width() - 4
+            text = fit_text(self.detail_font, text, room) if room > 20 else text
+        if self.detail_lbl.cget("text") != text:
+            self.detail_lbl.configure(text=text)
+
+    def set_compact(self, on):
+        """One line instead of two: the detail sits beside the message. Used when the screen is too
+        short for the whole Master page, to give the page about one more row of room."""
+        self.compact = on
+        if on:
+            self.msg_lbl.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=(7, 7))
+            self.detail_lbl.grid(row=0, column=2, sticky="ew", padx=(12, 14), pady=(7, 7))
+            self.dot.grid(row=0, column=0, rowspan=1, padx=(16, 0))
+            self.columnconfigure(1, weight=0)
+            self.columnconfigure(2, weight=1)
+        else:
+            self.msg_lbl.grid(row=0, column=1, sticky="ew", padx=(12, 14), pady=(10, 0))
+            self.detail_lbl.grid(row=1, column=1, columnspan=2, sticky="ew", padx=(12, 14), pady=(2, 10))
+            self.dot.grid(row=0, column=0, rowspan=2, padx=(16, 0))
+            self.columnconfigure(1, weight=1)
+            self.columnconfigure(2, weight=0)
+        self._show_detail()
+
     # ---- progress (only visible while working)
     def start_progress(self, maximum):
         self.progress.configure(maximum=maximum, value=0)
-        self.progress.grid(row=0, column=2, rowspan=2, sticky="e", padx=(0, 16))
+        self.progress.grid(row=0, column=3, rowspan=2, sticky="e", padx=(0, 16))
 
     def set_progress(self, value):
         self.progress.configure(value=value)

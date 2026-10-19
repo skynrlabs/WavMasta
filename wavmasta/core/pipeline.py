@@ -1,7 +1,8 @@
 """Mastering one song from start to finish. No GUI code here, so it works from scripts too.
 
 Order: trim silence, hum/whine notches and rumble filter, hiss reduction, harsh-top taming,
-de-essing, album tone match, tone EQ (or matching a reference), stereo width, glue compression,
+de-essing, album tone match, tone EQ (or matching a reference), centring the bass, stereo width,
+glue compression,
 the fade-out, then loudness and the true-peak limiter (the limiter only touches peaks, so the
 fade keeps its shape, and the loudness target counts the fade in).
 """
@@ -14,7 +15,7 @@ import numpy as np
 from ..config import DEFAULT_CEILING, LOUDNESS, TONES, log_default
 from . import album as albums
 from . import audio as aio
-from . import chain, cleanup, edges
+from . import chain, cleanup, edges, lowend
 from .analysis import analyze, find_tones, lufs
 from .deess import deess
 
@@ -33,6 +34,7 @@ class Settings:
     trim: bool = True  # cut dead silence from the start and end
     fade_out: float = 0.0  # seconds of fade at the end (0 = none)
     deess: int = 0  # 0-100 % de-essing
+    mono_bass: bool = False  # fold everything below lowend.MONO_BELOW Hz to mono
 
     def check(self):
         """Returns None if the settings make sense, otherwise what's wrong."""
@@ -75,6 +77,8 @@ class Settings:
             parts.append("trim")
         if self.fade_out:
             parts.append(f"fade {self.fade_out:g} s")
+        if self.mono_bass:
+            parts.append("bass centred")
         return " · ".join(parts)
 
     def as_dict(self):
@@ -101,7 +105,7 @@ def master_audio(audio, sr, s, log=log_default, progress=None, reference=None, t
         if progress:
             progress(frac)
 
-    info = {"tones": [], "target": s.target_lufs, "trim": (0.0, 0.0), "fade": 0.0, "album": None}
+    info = {"tones": [], "target": s.target_lufs, "trim": (0.0, 0.0), "fade": 0.0, "album": None, "mono_bass": False}
     if s.trim:
         audio, cut_start, cut_end = edges.trim(audio, sr)
         info["trim"] = (cut_start, cut_end)
@@ -143,6 +147,10 @@ def master_audio(audio, sr, s, log=log_default, progress=None, reference=None, t
     else:
         step(0.6, f"  tone: {s.tone}")
         x = cleanup.apply(x, sr, chain.tone_filters(s.tone))
+    if s.mono_bass and x.shape[0] == 2:
+        step(0.65, f"  centring the bass (below {lowend.MONO_BELOW:g} Hz)")
+        x = lowend.mono_bass(x, sr)
+        info["mono_bass"] = True
     x = chain.stereo_width(x, sr, s.width)
     if s.glue:
         step(0.7, f"  glue compression ({s.glue}%)")

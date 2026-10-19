@@ -5,8 +5,10 @@ app.post(), because Tk widgets may only be touched from the main thread. Results
 the Activity table as short, readable entries (see activity.py).
 """
 
+import atexit
 import hashlib
 import os
+import shutil
 import tempfile
 import threading
 
@@ -15,7 +17,20 @@ from ..core import album as albums
 from ..core.preview import write_wav16
 from .activity import master_report, short_path
 
-PREVIEW_DIR = tempfile.gettempdir()
+PREVIEW_DIR = None  # made on the first preview, see preview_dir()
+
+
+def preview_dir():
+    """Where Before/After clips are written: a private folder made for this run and removed on exit.
+
+    Fixed names in the shared temp folder could be pre-created as links by another user on the same
+    computer (Linux), making a preview overwrite one of your files. They also piled up there.
+    """
+    global PREVIEW_DIR
+    if PREVIEW_DIR is None:
+        PREVIEW_DIR = tempfile.mkdtemp(prefix="wavmasta-")  # only you can read or write it
+        atexit.register(shutil.rmtree, PREVIEW_DIR, True)
+    return PREVIEW_DIR
 
 
 def plural(n, word):
@@ -215,8 +230,9 @@ class PreviewJourney:
             if r["key"] not in self.clips:
                 before, after, start = ab_clips(r["audio"], r["mastered"], r["sr"])
                 tag = hashlib.md5(repr(r["key"]).encode()).hexdigest()[:10]
-                b = write_wav16(os.path.join(PREVIEW_DIR, f"wavmasta_before_{tag}.wav"), before, r["sr"])
-                a = write_wav16(os.path.join(PREVIEW_DIR, f"wavmasta_after_{tag}.wav"), after, r["sr"])
+                folder = preview_dir()
+                b = write_wav16(os.path.join(folder, f"wavmasta_before_{tag}.wav"), before, r["sr"])
+                a = write_wav16(os.path.join(folder, f"wavmasta_after_{tag}.wav"), after, r["sr"])
                 self.clips = {r["key"]: (b, a, start, after.shape[1] / r["sr"])}  # only the latest song
                 first = True
             else:

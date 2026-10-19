@@ -59,8 +59,14 @@ HELP_TEXT = [
     ),
     (
         "p",
-        "Trim silence from the start and end: cuts dead air off both ends, keeping a short breath before the "
+        "Trim silence at the ends: cuts dead air off both ends, keeping a short breath before the "
         "first note and a little room after the last one so nothing starts with a click.",
+    ),
+    (
+        "p",
+        "Keep bass centred: folds everything below 120 Hz to mono, so bass and kick hold up on phones and "
+        "small speakers instead of sounding thin. Check suggests it when a song's bass is spread wide in "
+        "stereo. Everything above 120 Hz keeps its width.",
     ),
     (
         "p",
@@ -126,6 +132,7 @@ class HelpPage(ttk.Frame):
         box.rowconfigure(0, weight=1)
         text = tk.Text(
             box,
+            height=6,  # the minimum; it grows to fill the page and scrolls by itself
             bg=T["card"],
             fg=T["text"],
             relief="flat",

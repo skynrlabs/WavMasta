@@ -6,6 +6,8 @@ skipped automatically when no display is available.
 
 import os
 import shutil
+import stat
+import tempfile
 import time
 
 import pytest
@@ -28,6 +30,7 @@ def _display_available():
 if not _display_available():
     pytest.skip("no display available", allow_module_level=True)
 
+from wavmasta.gui import app as app_module  # noqa: E402
 from wavmasta.gui import journeys  # noqa: E402
 from wavmasta.gui.app import WavMastaApp  # noqa: E402
 from wavmasta.gui.pages import PAGES  # noqa: E402
@@ -529,6 +532,24 @@ def test_new_controls_edit_the_selected_song(app, monkeypatch, copies):
     assert card.deess_var.get() == 0 and card.trim_var.get() is True
 
 
+def test_keep_bass_centred_is_stored_suggested_and_reported(app, monkeypatch, copies, tmp_path):
+    from . import synth
+    from .test_lowend import wide_bass_mix
+
+    path = synth.write(tmp_path / "in" / "Wide Bass.wav", wide_bass_mix())
+    add(app, monkeypatch, [path])
+    card, t = page(app).card, page(app).tracks[0]
+    assert t.mono_bass is False and card.mono_bass_var.get() is False
+    app.checker.start()
+    wait(app)
+    assert "spread wide" in card.findings_text()
+    app.use_suggestions()
+    assert t.mono_bass is True and card.mono_bass_var.get() is True and t.settings(-1).mono_bass
+    app.masterer.start()
+    wait(app, 120)
+    assert "Bass | centred" in app.activity.as_text()
+
+
 def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):
     from . import synth
 
@@ -772,3 +793,56 @@ def test_about_opens_the_open_source_licenses(app):
     app.root.update()
     assert not win.winfo_exists() and about.grab_current() is about  # back to the About box
     about.destroy()
+
+
+# ---- security: private preview files, only open folders
+
+
+def test_previews_go_to_a_private_folder(monkeypatch):
+    monkeypatch.setattr(journeys, "PREVIEW_DIR", None)
+    folder = journeys.preview_dir()
+    assert journeys.preview_dir() == folder  # one folder per run
+    assert os.path.isdir(folder) and folder != tempfile.gettempdir()
+    if os.name == "posix":
+        assert stat.S_IMODE(os.stat(folder).st_mode) == 0o700  # nobody else can plant a file there
+
+
+def test_open_path_only_opens_folders(app, tmp_path, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app_module.subprocess, "Popen", lambda args: opened.append(args))
+    not_a_folder = tmp_path / "Song - master.wav"
+    not_a_folder.write_bytes(b"RIFF")
+    app.open_path(str(not_a_folder))
+    assert opened == []
+    app.open_path(str(tmp_path))
+    assert opened == [["xdg-open", str(tmp_path)]]
+
+
+# ---- display scaling and short screens
+def test_compact_status_keeps_the_detail_on_one_line(app):
+    card = app.status_card
+    card.set_compact(True)
+    app.say("Building the before/after preview of A Rather Long Song Title.wav...", "busy", "x " * 200)
+    app.root.update()
+    shown = card.detail_lbl.cget("text")
+    assert shown.endswith("…") and card.detail.get() == "x " * 200  # shortened on screen only
+    assert card.detail_font.measure(shown) <= card.detail_lbl.winfo_width()
+    assert card.msg_lbl.grid_info()["row"] == card.detail_lbl.grid_info()["row"] == 0
+    card.set_compact(False)
+    app.root.update()
+    assert card.detail_lbl.grid_info()["row"] == 1 and card.detail_lbl.cget("text") == "x " * 200
+
+
+def test_help_page_scrolls_only_its_text(app):
+    app.show_page("help")
+    app.root.update()
+    assert not app.area.scrolling  # the text box scrolls by itself; the page fits
+
+
+def test_disabled_buttons_still_look_like_buttons(app):
+    from tkinter import ttk
+
+    from wavmasta.gui.theme import THEME
+
+    bg = ttk.Style(app.root).lookup("TButton", "background", ["disabled"])
+    assert bg.lower() not in (THEME["card"].lower(), THEME["bg"].lower())

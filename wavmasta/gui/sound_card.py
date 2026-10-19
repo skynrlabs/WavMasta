@@ -130,10 +130,17 @@ class SoundCard(ttk.Frame):
         f.bind("<Configure>", lambda e: self._wrap_ref_hint(f), add="+")
         self.fade_var, self.fade_text = tk.DoubleVar(value=0.0), tk.StringVar()
         self._slider_row(f, 8, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
+        # two switches for the whole song, side by side so the card doesn't grow
+        switches = ttk.Frame(f, style="Inner.TFrame")
+        switches.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
         self.trim_var = tk.BooleanVar(value=True)
         self.trim_var.trace_add("write", lambda *_: self._store())
-        self.trim_check = ttk.Checkbutton(f, text="Trim silence from the start and end", variable=self.trim_var)
-        self.trim_check.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        self.trim_check = ttk.Checkbutton(switches, text="Trim silence at the ends", variable=self.trim_var)
+        self.trim_check.pack(side="left")
+        self.mono_bass_var = tk.BooleanVar(value=False)
+        self.mono_bass_var.trace_add("write", lambda *_: self._store())
+        self.mono_bass_check = ttk.Checkbutton(switches, text="Keep bass centred", variable=self.mono_bass_var)
+        self.mono_bass_check.pack(side="left", padx=(16, 0))
 
         # hear the change right here, under the settings you just changed
         self._label(f, 11, "Hear")
@@ -211,6 +218,7 @@ class SoundCard(ttk.Frame):
         self.deess_var.set(track.deess)
         self.fade_var.set(track.fade_out)
         self.trim_var.set(track.trim)
+        self.mono_bass_var.set(track.mono_bass)
         self._loading = False
         self._refresh_texts()
         self.show_report(track.report)
@@ -318,6 +326,7 @@ class SoundCard(ttk.Frame):
         t.deess = int(float(self.deess_var.get()))
         t.fade_out = round(float(self.fade_var.get()) * 2) / 2
         t.trim = bool(self.trim_var.get())
+        t.mono_bass = bool(self.mono_bass_var.get())
         self._refresh_texts()
         self.show_report(t.report)
         if self.on_change:
@@ -378,7 +387,7 @@ class SoundCard(ttk.Frame):
             b.state(["!disabled"] if on or listening else ["disabled"])
         for b in (
             self.apply_btn, self.check_btn, self.suggest_btn, self.ref_btn, self.ref_clear, self.hum_check,
-            self.trim_check,
+            self.trim_check, self.mono_bass_check,
         ):  # fmt: skip
             b.state(["!disabled"] if on else ["disabled"])
         for s in self.sliders:

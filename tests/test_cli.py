@@ -77,3 +77,17 @@ def test_bad_release_settings_are_rejected(songs):
     for args in (["--deess", "150"], ["--fade-out", "30"]):
         with pytest.raises(SystemExit):
             main([songs["clean"], *args])
+
+
+def test_mono_bass_flag(tmp_path, capsys):
+    from wavmasta.core.lowend import SIDE_BASS_DB, side_bass_db
+
+    from . import synth
+    from .test_lowend import wide_bass_mix
+
+    src = synth.write(tmp_path / "Wide.wav", wide_bass_mix())
+    assert main([src, "--mono-bass", "--out", str(tmp_path / "out")]) == 0
+    y, sr = load(str(tmp_path / "out" / "Wide - master.wav"))
+    assert side_bass_db(y, sr) < SIDE_BASS_DB - 10
+    assert main([src, "--check"]) == 0
+    assert "spread wide" in capsys.readouterr().out

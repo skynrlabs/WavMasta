@@ -90,7 +90,14 @@ class WavMastaApp:
         sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
         scale = float(root.tk.call("tk", "scaling")) / (96 / 72)  # 1.0 at 100% display scaling
         w = min(max(root.winfo_reqwidth(), int(1100 * scale)), sw - 40)
-        h = min(root.winfo_reqheight(), sh - int(90 * scale))  # leave room for the taskbar and title bar
+        room = sh - int(90 * scale)  # leave room for the taskbar and title bar
+        if root.winfo_reqheight() > room:
+            # the screen is too short for the whole Master page (common at 125-150% scaling):
+            # a one-line status card gives the page more room
+            self.status_card.set_compact(True)
+            for _ in range(2):
+                root.update_idletasks()
+        h = min(root.winfo_reqheight(), room)
         self.area.canvas.configure(height=1)  # from now on the page area follows the window
         root.minsize(min(int(960 * scale), w), min(int(520 * scale), h))
         root.geometry(f"{w}x{h}")
@@ -99,7 +106,10 @@ class WavMastaApp:
         images = {}
         try:
             images["app"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon.png"))
-            images["small"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-32.png"))
+            # the sidebar logo: 32 px at 100%, a larger icon at 125%, 150% and up
+            scale = float(self.root.tk.call("tk", "scaling")) / (96 / 72)
+            size = 32 if scale < 1.15 else 40 if scale < 1.4 else 48 if scale < 1.8 else 64
+            images["small"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, f"icon-{size}.png"))
             images["about"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-64.png"))
             if not IS_WINDOWS:  # Windows uses the .ico set above, which looks sharper in the title bar
                 self.root.iconphoto(True, images["app"])

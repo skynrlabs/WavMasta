@@ -42,6 +42,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs; **Check** works out how many dB your song needs
 - 🐍 **De-esser**: turns down sharp "s" and "t" sounds in the vocal, only while each one lasts and only above 4.5 kHz; **Check** suggests an amount when it hears them
 - ✂️ **Trim and fade**: cuts dead air off both ends (without clicks) and fades the ending smoothly; **Check** spots songs that stop suddenly
+- 🔈 **Keep bass centred**: folds the bass below 120 Hz to mono so it holds up on phones and small speakers; **Check** suggests it when the bass is spread wide, and warns when parts of a song cancel out in mono
 - 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
 - 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
 - 🧲 **Glue and width**: bus compression to hold the mix together, and stereo width that keeps bass and kick centred
@@ -118,6 +119,7 @@ Everything happens on the **Master** page, top to bottom:
 | De-ess | Turns the band above 4.5 kHz down only while an "s" lasts |
 | Album match | Nudges the song's tone toward the album's average (album mode only) |
 | Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song |
+| Keep bass centred | Mono below 120 Hz (when turned on); everything above keeps its width |
 | Stereo width | Mid/side width; bass and kick stay centred |
 | Glue | Slow-attack bus compression |
 | Fade-out | Smooth fade to silence (before loudness, so the song still lands on target) |
@@ -162,6 +164,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | `--deess` | Tame sharp "s" sounds, `0`-`100` (default `0`) |
 | `--fade-out` | Fade the ending over this many seconds, `0`-`10` |
 | `--no-trim` | Keep silence at the start and end |
+| `--mono-bass` | Keep the bass centred: mono below 120 Hz |
 | `--album` | Master all the songs as one album: matched tone and loudness |
 | `--glue` | Glue compression `0`-`100` (default `30`) |
 | `--width` | Stereo width `0`-`150` (default `100`) |
@@ -192,6 +195,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
 | Vocals sound lispy or dull after de-essing | Lower **De-ess**. 30-50% is usually enough. |
 | Album songs still sound different | Album mode matches overall tone and loudness, not arrangement. Check that one song isn't using a **Reference**: a reference decides that song's tone instead. |
+| **Check** says parts of the song cancel out in mono | A track in the mix is out of phase (often a stereo widener or a flipped mic). Mastering can't fix it; check the mix, or try the song on a phone speaker to hear it. |
 | A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
 | **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |
 | Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** page and master again. |
@@ -214,6 +218,7 @@ wavmasta/
 │   ├── analysis.py      Loudness (BS.1770), true peak, hiss, hum/whine and harsh-highs detection
 │   ├── cleanup.py       De-hisser, hum and whine notches, harsh-highs shelf
 │   ├── deess.py         Finding and taming sharp "s" sounds
+│   ├── lowend.py        Keeping the bass centred, and checking mono compatibility
 │   ├── edges.py         Trimming silence, fade-outs, spotting sudden endings
 │   ├── album.py         Album mode: the set's shared tone and loudness
 │   ├── chain.py         Tone EQ, reference matching, width, glue, loudness and true-peak limiter

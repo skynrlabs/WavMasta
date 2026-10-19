@@ -109,6 +109,15 @@ def master_report(result, settings, fmt, ceiling):
         rows.append(("Ending", f"{info['fade']:g} s fade-out", "smooth to silence", True))
     elif before.abrupt_end:
         rows.append(("Ending", "stops suddenly", f"try a {before.suggested().get('fade_out', 3):g} s fade-out", False))
+    # bass and mono
+    if info.get("mono_bass"):
+        rows.append(("Bass", "centred", "mono below 120 Hz, so it holds up on phones and small speakers", True))
+    elif before.wide_bass:
+        rows.append(("Bass", "spread wide", "try Keep bass centred", False))
+    if before.cancels_in_mono:
+        rows.append(
+            ("Mono", f"-{before.mono_loss:.0f} dB in places", "an out-of-phase part cancels on mono speakers", False)
+        )
     # sound and file
     tone = f"matched to {os.path.basename(settings.reference)}" if settings.reference else settings.tone
     if info.get("album"):

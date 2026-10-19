@@ -325,6 +325,7 @@ class WavMastaApp:
                 "deess": "de-ess",
                 "trim": "trim silence",
                 "fade_out": "fade-out",
+                "mono_bass": "bass centred",
             }
             self.say(
                 "Suggestions applied",

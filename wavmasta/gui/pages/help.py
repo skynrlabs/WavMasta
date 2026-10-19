@@ -126,6 +126,7 @@ class HelpPage(ttk.Frame):
         box.rowconfigure(0, weight=1)
         text = tk.Text(
             box,
+            height=6,  # the minimum; it grows to fill the page and scrolls by itself
             bg=T["card"],
             fg=T["text"],
             relief="flat",

@@ -137,7 +137,8 @@ def apply_styles(root, F):
     )
     st.map(
         "TButton",
-        background=[("active", T["line_hover"]), ("disabled", T["card"])],
+        # disabled: a dimmed button, still visibly a button (the card colour made it vanish)
+        background=[("active", T["line_hover"]), ("disabled", blend(T["line"], T["card"], 0.45))],
         foreground=[("disabled", T["muted"])],
     )
     st.configure("Small.TButton", font=F["small"], padding=(10, 3))
@@ -175,7 +176,8 @@ def apply_styles(root, F):
         foreground=T["text"],
         indicatorbackground=T["field"],
         indicatorforeground=T["accent_text"],
-        indicatormargin=4,
+        indicatorsize=px(root, 12),  # grows with display scaling, like the label beside it
+        indicatormargin=px(root, 4),
     )
     st.configure("Card.TCheckbutton", font=F["btn"])
     st.map(

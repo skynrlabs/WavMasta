@@ -282,6 +282,20 @@ class Report:
     tail_silence: float = 0.0  # ...and after it ends
     abrupt_end: bool = False  # stops while still loud, with no fade
     sibilance: float = float("-inf")  # how harsh the 's' sounds are (deess.sibilance_db)
+    side_bass: float = float("-inf")  # bass in the sides vs the centre, dB (lowend.side_bass_db)
+    mono_loss: float = 0.0  # how much quieter the worst band gets in mono, dB (lowend.mono_loss_db)
+
+    @property
+    def wide_bass(self):
+        from .lowend import SIDE_BASS_DB
+
+        return self.side_bass > SIDE_BASS_DB
+
+    @property
+    def cancels_in_mono(self):
+        from .lowend import MONO_LOSS_DB
+
+        return self.mono_loss > MONO_LOSS_DB
 
     @property
     def hiss(self):
@@ -333,6 +347,16 @@ class Report:
             out.append(f"Silence: {' and '.join(silence)}. Trim silence takes it off.")
         if self.abrupt_end:
             out.append(f"The song stops suddenly at the end. Try a {SUGGESTED_FADE:g} s fade-out.")
+        if self.wide_bass:
+            out.append(
+                "The bass is spread wide in stereo, so it can sound thin on phones and small speakers. "
+                "Try Keep bass centred."
+            )
+        if self.cancels_in_mono:
+            out.append(
+                f"Parts of the song cancel out in mono (phones, Bluetooth and club speakers): up to "
+                f"{self.mono_loss:.0f} dB quieter. Check the mix for an out-of-phase track; mastering can't fix it."
+            )
         if not out:
             out.append("No noise problems found. Pick a tone and loudness and master it.")
         return out
@@ -350,6 +374,8 @@ class Report:
             s["trim"] = True
         if self.abrupt_end:
             s["fade_out"] = SUGGESTED_FADE
+        if self.wide_bass:
+            s["mono_bass"] = True
         return s
 
     def summary(self):
@@ -357,7 +383,7 @@ class Report:
 
 
 def analyze(audio, sr):
-    from . import edges
+    from . import edges, lowend
     from .deess import sibilance_db
 
     song = lufs(audio, sr)
@@ -378,4 +404,6 @@ def analyze(audio, sr):
         tail_silence=tail,
         abrupt_end=edges.ends_abruptly(audio, sr),
         sibilance=sibilance_db(audio, sr),
+        side_bass=lowend.side_bass_db(audio, sr),
+        mono_loss=lowend.mono_loss_db(audio, sr),
     )

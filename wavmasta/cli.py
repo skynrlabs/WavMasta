@@ -33,6 +33,7 @@ def build_parser():
     ap.add_argument("--deess", type=int, default=0, help="tame sharp 's' sounds in vocals, 0-100 (default: 0, off)")
     ap.add_argument("--fade-out", type=float, default=0.0, help="fade the end over this many seconds, 0-10")
     ap.add_argument("--no-trim", action="store_true", help="keep silence at the start and end")
+    ap.add_argument("--mono-bass", action="store_true", help="keep the bass centred: mono below 120 Hz")
     ap.add_argument("--album", action="store_true", help="master the songs as one album: matched tone and loudness")
     ap.add_argument("--auto", action="store_true", help="use the cleanup settings Check suggests for each song")
     ap.add_argument("--format", default="wav", choices=list(FORMAT_KEYS), help="wav (24-bit), wav16, flac or mp3")
@@ -76,6 +77,7 @@ def main(argv=None):
             deess=a.deess,
             fade_out=a.fade_out,
             trim=not a.no_trim,
+            mono_bass=a.mono_bass,
         )
         if a.auto:
             audio, sr = load(song)

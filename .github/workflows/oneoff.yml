@@ -1,0 +1,56 @@
+name: One-off build (installer + MSIX)
+
+on:
+  push:
+    branches: [build-installer]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Installer
+        shell: pwsh
+        run: .\packaging\build.ps1
+      - name: MSIX
+        shell: pwsh
+        run: .\packaging\build-msix.ps1
+      - name: Check the package
+        shell: pwsh
+        run: |
+          $m = Get-ChildItem dist\msix\*.msix | Select-Object -First 1
+          $sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\makeappx.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          & $sdk.FullName unpack /p $m.FullName /d dist\msix\check /o | Out-Null
+          Get-ChildItem dist\msix\check -Name | Select-Object -First 12
+          Get-Content dist\msix\check\AppxManifest.xml
+      - name: Hand the files over on a temporary branch
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory out | Out-Null
+          Copy-Item dist\installer\*.exe out\
+          # GitHub refuses files over 100 MB, so hand the package over in 90 MB parts
+          foreach ($m in Get-ChildItem dist\msix\*.msix) {
+            $bytes = [IO.File]::ReadAllBytes($m.FullName); $part = 90MB; $n = 0
+            for ($i = 0; $i -lt $bytes.Length; $i += $part) {
+              $len = [Math]::Min($part, $bytes.Length - $i)
+              [IO.File]::WriteAllBytes("out\$($m.Name).part$n", $bytes[$i..($i + $len - 1)]); $n++
+            }
+          }
+          Copy-Item dist\msix\root\AppxManifest.xml out\
+          Set-Location out
+          git init -q -b installer-out
+          git config user.name "Skynr Labs"
+          git config user.email "billskynr@gmail.com"
+          git add -A
+          git commit -q -m "Build output"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" installer-out

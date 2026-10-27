@@ -8,9 +8,13 @@ from . import __version__
 from .config import DEFAULT_CEILING, TONES
 from .core import Settings, analyze, load, master_file
 from .core import album as albums
+from .core.chain import GLUE_STYLES
 
 TONE_KEYS = {name.lower().replace(" ", "-"): name for name in TONES}  # "roots-rock" -> "Roots rock"
 FORMAT_KEYS = {"wav": "WAV 24-bit", "wav16": "WAV 16-bit (CD)", "flac": "FLAC 24-bit", "mp3": "MP3 320 kbps"}
+
+
+GLUE_STYLE_KEYS = {name.lower(): name for name in GLUE_STYLES}  # "three-band" -> "Three-band"
 
 
 def build_parser():
@@ -24,10 +28,18 @@ def build_parser():
     ap.add_argument("--tone", default="neutral", choices=list(TONE_KEYS), help="EQ shape (default: neutral)")
     ap.add_argument("--loudness", type=float, default=-14.0, help="target loudness in LUFS (default: -14)")
     ap.add_argument("--ceiling", type=float, default=DEFAULT_CEILING, help="true-peak ceiling in dBTP (default: -1)")
+    ap.add_argument(
+        "--soft-clip", default="auto", choices=["auto", "always", "off"],
+        help="round off the sharpest peaks before the limiter (auto: only louder than -14 LUFS)",
+    )  # fmt: skip
     ap.add_argument("--denoise", type=int, default=0, help="noise reduction 0-100 (default: 0, off)")
     ap.add_argument("--no-hum-fix", action="store_true", help="don't notch out steady hum and whine")
     ap.add_argument("--tame-highs", type=float, default=0.0, help="cut harsh highs above 11 kHz, 0-6 dB")
     ap.add_argument("--glue", type=int, default=30, help="glue compression 0-100 (default: 30)")
+    ap.add_argument(
+        "--glue-style", default="smooth", choices=list(GLUE_STYLE_KEYS),
+        help="smooth (default), punchy (lets drum hits through) or three-band (a loud kick doesn't duck the rest)",
+    )  # fmt: skip
     ap.add_argument("--width", type=int, default=100, help="stereo width 0-150 (default: 100)")
     ap.add_argument("--reference", help="a finished song to match tone and loudness to")
     ap.add_argument("--deess", type=int, default=0, help="tame sharp 's' sounds in vocals, 0-100 (default: 0, off)")
@@ -72,12 +84,14 @@ def main(argv=None):
             fix_tones=not a.no_hum_fix,
             tame_top=a.tame_highs,
             glue=a.glue,
+            glue_style=GLUE_STYLE_KEYS[a.glue_style],
             width=a.width,
             reference=a.reference,
             deess=a.deess,
             fade_out=a.fade_out,
             trim=not a.no_trim,
             mono_bass=a.mono_bass,
+            soft_clip=a.soft_clip.capitalize(),
         )
         if a.auto:
             audio, sr = load(song)

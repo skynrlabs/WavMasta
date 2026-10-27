@@ -91,3 +91,24 @@ def test_mono_bass_flag(tmp_path, capsys):
     assert side_bass_db(y, sr) < SIDE_BASS_DB - 10
     assert main([src, "--check"]) == 0
     assert "spread wide" in capsys.readouterr().out
+
+
+def test_glue_style_and_soft_clip_flags(tmp_path, monkeypatch):
+    import wavmasta.cli as cli
+
+    from . import synth
+
+    src = synth.write(tmp_path / "Loud.wav", synth.mix(seconds=6) * 0.4)
+    seen = []
+    real = cli.master_file
+    monkeypatch.setattr(cli, "master_file", lambda song, s, *a, **k: (seen.append(s), real(song, s, *a, **k))[1])
+    out = tmp_path / "out"
+    args = [src, "--glue-style", "three-band", "--soft-clip", "always", "--loudness", "-11", "--out", str(out)]
+    assert main(args) == 0
+    assert seen[0].glue_style == "Three-band" and seen[0].soft_clip == "Always"
+    y, sr = load(str(out / "Loud - master.wav"))
+    assert abs(lufs(y, sr) - -11) < 0.3
+    assert main([src, "--out", str(out)]) == 0
+    assert seen[1].glue_style == "Smooth" and seen[1].soft_clip == "Auto"
+    with pytest.raises(SystemExit):
+        main([src, "--glue-style", "wobbly"])

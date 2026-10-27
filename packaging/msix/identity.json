@@ -1,0 +1,6 @@
+{
+  "_help": "Copy these from Partner Center: your app > Product management > Product identity. They must match exactly, or the Store rejects the package.",
+  "name": "REPLACE with Package/Identity/Name",
+  "publisher": "REPLACE with Package/Identity/Publisher",
+  "publisher_display_name": "Skynr Labs"
+}

@@ -56,8 +56,10 @@ class MasterPage(ttk.Frame):
         )
         self.card.grid(row=2, column=0, sticky="nsew", pady=(0, 12))
         self.rowconfigure(3, weight=1)
-        # the save format, folder and ceiling also decide what a saved master contains
-        for var in (settings_page.format_var, settings_page.ceiling_var, settings_page.out_text):
+        # the save format, folder, ceiling and soft clip also decide what a saved master contains
+        for var in (
+            settings_page.format_var, settings_page.ceiling_var, settings_page.soft_clip_var, settings_page.out_text
+        ):  # fmt: skip
             var.trace_add("write", lambda *_: self.refresh_staleness())
 
     # ---- songs
@@ -207,7 +209,8 @@ class MasterPage(ttk.Frame):
     def signature(self, track):
         """Everything that decides what a song's master contains."""
         sp = self.settings_page
-        return (track.sound(), sp.format_var.get(), sp.ceiling_var.get(), sp.out_text.get(), self.album_key())
+        peaks = (sp.ceiling_var.get(), sp.soft_clip())
+        return (track.sound(), sp.format_var.get(), peaks, sp.out_text.get(), self.album_key())
 
     def mark_saved(self, track, sig):
         track.saved_sig = sig

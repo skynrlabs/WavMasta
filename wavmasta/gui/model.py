@@ -6,10 +6,11 @@ from dataclasses import dataclass, field
 
 from ..config import DEFAULT_LOUDNESS, LOUDNESS
 from ..core import Settings
+from ..core.chain import GLUE_STYLE_DEFAULT
 
 SOUND_FIELDS = (
     "tone", "loudness", "denoise", "fix_tones", "tame_top", "glue", "width", "reference", "deess", "fade_out", "trim",
-    "mono_bass",
+    "mono_bass", "glue_style",
 )  # fmt: skip
 
 
@@ -22,6 +23,7 @@ class Track:
     fix_tones: bool = True
     tame_top: float = 0.0
     glue: int = 30
+    glue_style: str = GLUE_STYLE_DEFAULT  # Smooth, Punchy or Three-band
     width: int = 100
     reference: str | None = None
     deess: int = 0
@@ -44,7 +46,7 @@ class Track:
         """This song's settings as a tuple, for spotting changes."""
         return tuple(getattr(self, f) for f in SOUND_FIELDS)
 
-    def settings(self, ceiling):
+    def settings(self, ceiling, soft_clip="Auto"):
         return Settings(
             tone=self.tone,
             target_lufs=LOUDNESS[self.loudness],
@@ -53,12 +55,14 @@ class Track:
             fix_tones=self.fix_tones,
             tame_top=self.tame_top,
             glue=self.glue,
+            glue_style=self.glue_style,
             width=self.width,
             reference=self.reference,
             deess=self.deess,
             fade_out=self.fade_out,
             trim=self.trim,
             mono_bass=self.mono_bass,
+            soft_clip=soft_clip,
         )
 
     def reset(self):

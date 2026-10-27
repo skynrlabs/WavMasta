@@ -550,6 +550,59 @@ def test_keep_bass_centred_is_stored_suggested_and_reported(app, monkeypatch, co
     assert "Bass | centred" in app.activity.as_text()
 
 
+def test_glue_style_is_stored_per_song_and_reported(app, monkeypatch, copies):
+    add(app, monkeypatch, [copies["clean"], copies["hum"]])
+    p = page(app)
+    card, t = p.card, p.tracks[0]
+    assert t.glue_style == "Smooth" and card.glue_style_var.get() == "Smooth"
+    assert card.glue_style_hint.get() == "even and gentle"
+    card.glue_style_var.set("Three-band")
+    card.glue_style_box.event_generate("<<ComboboxSelected>>")
+    app.root.update()
+    assert t.glue_style == "Three-band" and card.glue_style_hint.get() == "tames a loud kick"
+    assert t.settings(-1).glue_style == "Three-band"
+    # no glue: the style can't do anything, so it's switched off and says why
+    card.glue_var.set(0)
+    card._store()
+    assert card.glue_style_box.instate(["disabled"]) and "turn Glue up" in card.glue_style_hint.get()
+    card.glue_var.set(30)
+    card._store()
+    assert not card.glue_style_box.instate(["disabled"])
+    p.apply_to_all()
+    assert p.tracks[1].glue_style == "Three-band"
+    p.select(1)
+    assert card.glue_style_var.get() == "Three-band"
+    app.masterer.start()
+    wait(app, 180)
+    assert "glue 30% three-band" in app.activity.as_text()
+
+
+def test_soft_clip_setting_is_saved_used_and_reset(app, monkeypatch, copies):
+    from wavmasta.config import load_settings
+
+    sp = app.settings_page
+    assert sp.soft_clip() == "Auto" and "louder than Streaming" in sp.soft_clip_hint.get()
+    add(app, monkeypatch, [copies["clean"]])
+    t = page(app).tracks[0]
+    app.masterer.start()
+    wait(app, 120)
+    assert "soft-clipped" not in app.activity.as_text()  # Streaming: Auto leaves it to the limiter
+    assert t.status.startswith("saved")
+    sp.soft_clip_var.set("Always")
+    assert load_settings()["soft_clip"] == "Always" and "every master" in sp.soft_clip_hint.get()
+    app.root.update()
+    assert t.status.startswith("changed")  # the saved master was made without it
+    sp.soft_clip_var.set("Auto")
+    app.root.update()
+    assert t.status.startswith("saved")
+    sp.soft_clip_var.set("Always")
+    app.masterer.start()
+    wait(app, 120)
+    assert "soft-clipped" in app.activity.as_text()
+    app.reset_settings()
+    assert sp.soft_clip() == "Auto"
+
+
 def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):
     from . import synth
 

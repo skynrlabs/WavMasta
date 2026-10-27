@@ -249,7 +249,8 @@ class WavMastaApp:
                 threading.Thread(target=self._read_waveform, args=(track, mtime), daemon=True).start()
             return
         ceiling, err = self.settings_page.ceiling()
-        current = (track.path, mtime, track.sound(), ceiling, page.album_key())
+        peaks = None if err else (ceiling, self.settings_page.soft_clip())
+        current = (track.path, mtime, track.sound(), peaks, page.album_key())
         changed = wave.get("after") is not None and wave.get("key") != current
         page.wave.show(dict(wave, ceiling=10 ** (ceiling / 20) if not err else None, stale=changed))
         heard = wave.get("window") is not None  # only Before/After sets the stretch you listened to

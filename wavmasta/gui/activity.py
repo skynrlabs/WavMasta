@@ -68,6 +68,8 @@ def master_report(result, settings, fmt, ceiling):
     else:
         feel = "dense: lower Loudness or Glue for more"
     rows.append(("Punch", f"{plr:.1f} dB", feel, plr >= 7))
+    if info.get("soft_clip"):
+        rows.append(("Peaks", "soft-clipped", "the sharpest peaks rounded off first, so the limiter pumps less", True))
     # cleanup
     if settings.denoise:
         if before.quiet_level is not None and after.quiet_level is not None:
@@ -122,7 +124,8 @@ def master_report(result, settings, fmt, ceiling):
     tone = f"matched to {os.path.basename(settings.reference)}" if settings.reference else settings.tone
     if info.get("album"):
         tone += " · album tone"
-    extra = f"glue {settings.glue}% · width {settings.width}%"
+    glue = f"glue {settings.glue}% {settings.glue_style.lower()}" if settings.glue else "no glue"
+    extra = f"{glue} · width {settings.width}%"
     rows.append(("Sound", tone, extra, True))
     rows.append(
         ("File", fmt, f"{after.sample_rate / 1000:g} kHz · {_clock(after.duration)} · original unchanged", True)

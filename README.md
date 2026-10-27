@@ -45,7 +45,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 🔈 **Keep bass centred**: folds the bass below 120 Hz to mono so it holds up on phones and small speakers; **Check** suggests it when the bass is spread wide, and warns when parts of a song cancel out in mono
 - 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
 - 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
-- 🧲 **Glue and width**: bus compression to hold the mix together, and stereo width that keeps bass and kick centred
+- 🧲 **Glue and width**: bus compression to hold the mix together (Smooth, Punchy, or Three-band so a loud kick doesn't duck the vocal), and stereo width that keeps bass and kick centred
 - 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a look-ahead true-peak limiter that never clips
 - ▶️ **Fair before/after**: hear the loudest 20 seconds of the original and the master at the same loudness, right from the sound card, after every change
 - 〰️ **Waveform before and after**: the master drawn over the original, with the ceiling and the stretch you heard, so you can see what changed
@@ -105,7 +105,7 @@ Everything happens on the **Master** page, top to bottom:
 
 **History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, what cleanup removed, trimming and the ending. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
 
-**Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
+**Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling and soft clip, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
 ### The chain
 
@@ -121,9 +121,9 @@ Everything happens on the **Master** page, top to bottom:
 | Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song |
 | Keep bass centred | Mono below 120 Hz (when turned on); everything above keeps its width |
 | Stereo width | Mid/side width; bass and kick stay centred |
-| Glue | Slow-attack bus compression |
+| Glue | Bus compression: Smooth, Punchy (slower attack) or Three-band (bass, mids and highs each on their own) |
 | Fade-out | Smooth fade to silence (before loudness, so the song still lands on target) |
-| Loudness and limiter | Lands on the target LUFS with a look-ahead true-peak limiter; never clips |
+| Loudness and limiter | Lands on the target LUFS with a look-ahead true-peak limiter; never clips. For masters louder than -14 LUFS an oversampled soft clipper rounds off the sharpest peaks first, so the limiter pumps less (Settings: Auto, Always or Off) |
 
 ### ⌨️ Keyboard shortcuts
 
@@ -158,6 +158,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | `--tone` | `neutral`, `country`, `roots-rock`, `pop`, `warm` or `bright` |
 | `--loudness` | Target in LUFS (default `-14`) |
 | `--ceiling` | True-peak ceiling in dBTP (default `-1`) |
+| `--soft-clip` | `auto` (default: only louder than -14 LUFS), `always` or `off` |
 | `--denoise` | Noise reduction `0`-`100` (default `0`) |
 | `--no-hum-fix` | Don't notch out steady hum and whine |
 | `--tame-highs` | Cut harsh highs, `0`-`6` dB |
@@ -167,6 +168,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | `--mono-bass` | Keep the bass centred: mono below 120 Hz |
 | `--album` | Master all the songs as one album: matched tone and loudness |
 | `--glue` | Glue compression `0`-`100` (default `30`) |
+| `--glue-style` | `smooth` (default), `punchy` or `three-band` |
 | `--width` | Stereo width `0`-`150` (default `100`) |
 | `--reference` | A finished song to match tone and loudness to |
 | `--auto` | Use what Check suggests for each song (cleanup, de-ess, trim, fade) |
@@ -190,7 +192,8 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | Problem | Fix |
 |---|---|
 | **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
-| The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, and lower **Glue** to 20-30%. |
+| The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, lower **Glue** to 20-30%, or try the **Punchy** glue style. |
+| The vocal dips every time the kick or bass hits | Set the glue style to **Three-band**. |
 | Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
 | The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
 | Vocals sound lispy or dull after de-essing | Lower **De-ess**. 30-50% is usually enough. |
@@ -221,7 +224,7 @@ wavmasta/
 │   ├── lowend.py        Keeping the bass centred, and checking mono compatibility
 │   ├── edges.py         Trimming silence, fade-outs, spotting sudden endings
 │   ├── album.py         Album mode: the set's shared tone and loudness
-│   ├── chain.py         Tone EQ, reference matching, width, glue, loudness and true-peak limiter
+│   ├── chain.py         Tone EQ, reference matching, width, glue styles, soft clip, loudness and true-peak limiter
 │   ├── audio.py         Reading and writing WAV, FLAC, MP3 (with dither for 16-bit)
 │   └── preview.py       Level-matched before/after clips, playback and waveform outlines
 └── gui/                 The window
@@ -275,7 +278,7 @@ master_file("My Song.wav", Settings(tone="Country", denoise=40, target_lufs=-14)
 
 ## 🔐 Privacy
 
-WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. Besides your masters, the only file it writes is a small `settings.json` that remembers your format, peak ceiling and whether to open the folder when done, stored in `%APPDATA%\WavMasta` on Windows, `~/Library/Application Support/WavMasta` on macOS or `~/.config/wavmasta` on Linux. Before/After previews go in your system temp folder.
+WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. Besides your masters, the only file it writes is a small `settings.json` that remembers your format, peak ceiling, soft clip and whether to open the folder when done, stored in `%APPDATA%\WavMasta` on Windows, `~/Library/Application Support/WavMasta` on macOS or `~/.config/wavmasta` on Linux. Before/After previews go in a private folder inside your system temp folder, removed when WavMasta closes.
 
 ---
 

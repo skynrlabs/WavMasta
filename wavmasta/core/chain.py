@@ -35,22 +35,66 @@ def stereo_width(audio, sr, percent):
     return np.vstack([mid + side, mid - side]).astype(np.float32)
 
 
-def glue(audio, sr, amount):
-    """Gentle bus compression that holds the mix together. amount 0-100 (0 = off)."""
-    if amount <= 0:
-        return audio
-    a = amount / 100.0
-    # set the level going in, so the same amount behaves the same on quiet and loud mixes
+GLUE_STYLES = {  # name: what it does, in a few words (shown next to the choice)
+    "Smooth": "even and gentle",
+    "Punchy": "lets the drums through",
+    "Three-band": "tames a loud kick",
+}
+GLUE_STYLE_DEFAULT = "Smooth"
+BAND_SPLITS = (150.0, 3000.0)  # Hz: bass | mids | highs for Three-band glue
+
+
+def _compress(audio, sr, a, attack_ms, release_ms, threshold_offset=0.0, ratio_scale=1.0):
+    """One compressor, with the level going in set to -18 LUFS-ish so the same amount behaves the same
+    on quiet and loud material. a is the amount 0-1."""
     level = lufs(audio, sr)
     pre = 0.0 if not np.isfinite(level) else -18.0 - level
     board = Pedalboard(
         [
             Gain(gain_db=pre),
-            Compressor(threshold_db=-14.0 - 10.0 * a, ratio=1.5 + 2.5 * a, attack_ms=30.0, release_ms=180.0),
+            Compressor(
+                threshold_db=-14.0 - 10.0 * a + threshold_offset,
+                ratio=1.0 + (0.5 + 2.5 * a) * ratio_scale,
+                attack_ms=attack_ms,
+                release_ms=release_ms,
+            ),
             Gain(gain_db=-pre),
         ]
     )
     return board(audio, sr).astype(np.float32)
+
+
+def split_bands(audio, sr, splits=BAND_SPLITS):
+    """Bass, mids and highs that add back up to exactly the input (zero-phase filters)."""
+    from scipy.signal import butter, sosfiltfilt
+
+    lo = sosfiltfilt(butter(4, splits[0], "low", fs=sr, output="sos"), audio, axis=-1)
+    rest = audio - lo
+    hi = sosfiltfilt(butter(4, splits[1], "high", fs=sr, output="sos"), rest, axis=-1)
+    return [lo.astype(np.float32), (rest - hi).astype(np.float32), hi.astype(np.float32)]
+
+
+def glue(audio, sr, amount, style=GLUE_STYLE_DEFAULT):
+    """Bus compression that holds the mix together. amount 0-100 (0 = off).
+
+    Smooth: one gentle compressor (30 ms attack), the original WavMasta glue.
+    Punchy: a slower attack (80 ms) so the start of each drum hit gets through before it acts.
+    Three-band: bass, mids and highs each get their own compressor, so a loud kick or bass note
+    only turns the bass down, not the vocal and guitars with it.
+    """
+    if amount <= 0:
+        return audio
+    a = amount / 100.0
+    if style == "Punchy":
+        return _compress(audio, sr, a, attack_ms=80.0, release_ms=140.0)
+    if style == "Three-band":
+        lo, mid, hi = split_bands(audio, sr)
+        # each band is levelled on its own, so the thresholds mean the same in every band
+        lo = _compress(lo, sr, a, attack_ms=40.0, release_ms=220.0, threshold_offset=-1.0, ratio_scale=1.2)
+        mid = _compress(mid, sr, a, attack_ms=25.0, release_ms=160.0)
+        hi = _compress(hi, sr, a, attack_ms=10.0, release_ms=100.0, ratio_scale=0.8)
+        return (lo + mid + hi).astype(np.float32)
+    return _compress(audio, sr, a, attack_ms=30.0, release_ms=180.0)
 
 
 class TruePeakLimiter:
@@ -106,21 +150,62 @@ class TruePeakLimiter:
         return (self.audio * (g * gain)).astype(np.float32)
 
 
-def loudness_and_limit(audio, sr, target_lufs, ceiling_db=-1.0):
+SOFT_CLIP_MODES = ("Auto", "Always", "Off")
+SOFT_CLIP_KNEE_DB = 3.0  # the clipper starts rounding this far under its limit
+SOFT_CLIP_OVER_DB = 1.0  # and lets peaks go this far over the ceiling (the limiter takes the rest)
+
+
+def soft_clip_on(mode, target_lufs):
+    """Auto: only for masters louder than Streaming (-14 LUFS), where the limiter works hard."""
+    if mode == "Always":
+        return True
+    if mode == "Off":
+        return False
+    return target_lufs > -14.0 + 0.25
+
+
+def soft_clip(audio, limit_db, knee_db=SOFT_CLIP_KNEE_DB):
+    """Round off the sharpest peaks smoothly instead of letting the limiter duck the whole mix for them.
+
+    Below the knee nothing changes; above it the level bends over (tanh) towards limit_db, so peaks
+    are shaved by a dB or three with no hard corners. Done at 4x the sample rate so the rounding
+    doesn't fold back as harsh aliasing.
+    """
+    from scipy.signal import resample_poly
+
+    limit = np.float32(10 ** (limit_db / 20))
+    knee = np.float32(limit * 10 ** (-knee_db / 20))
+    span = limit - knee
+    up = resample_poly(audio.astype(np.float32), 4, 1, axis=-1).astype(np.float32)
+    mag = np.abs(up)
+    over = mag > knee
+    mag[over] = knee + span * np.tanh((mag[over] - knee) / span)
+    up = np.copysign(mag, up)
+    return resample_poly(up, 1, 4, axis=-1)[:, : audio.shape[1]].astype(np.float32)
+
+
+def loudness_and_limit(audio, sr, target_lufs, ceiling_db=-1.0, clip=False):
     """Bring the song to target loudness with a true-peak limiter, peaks kept under ceiling (dBTP).
 
     The input gain is searched (always applied to the unprocessed audio, so gains never stack up)
     until the result lands on the target. The limiter aims 0.3 dB under the ceiling, because 4x
     true-peak meters (the streaming standard) can read a little under the real peak.
+
+    clip: soft-clip the sharpest peaks first (see soft_clip), so on loud masters the limiter has
+    less to do and pumps less. The clipper sits after the gain, so each try clips afresh.
     """
     level = lufs(audio, sr)
     if not np.isfinite(level):
         return audio  # silence
-    limiter = TruePeakLimiter(audio, sr)
     aim = ceiling_db - 0.3
+    limiter = None if clip else TruePeakLimiter(audio, sr)
 
     def run(g):
-        out = limiter.run(g, aim)
+        if clip:
+            x = soft_clip(audio * 10 ** (g / 20), aim + SOFT_CLIP_OVER_DB)
+            out = TruePeakLimiter(x, sr).run(0.0, aim)
+        else:
+            out = limiter.run(g, aim)
         return out, lufs(out, sr)
 
     # Secant search: the limiter flattens the response (+3 dB in gives less than +3 dB out),

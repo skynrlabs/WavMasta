@@ -46,6 +46,12 @@ HELP_TEXT = [
         "is turned down to -14 and just sounds flatter than a -14 master.",
     ),
     ("p", "Glue: gentle compression that holds the mix together. 20-40% is natural; more gets punchy and dense."),
+    (
+        "p",
+        "Glue style: Smooth is even and gentle. Punchy waits a moment before it acts, so the start of each drum "
+        "hit gets through. Three-band compresses the bass, mids and highs separately, so a loud kick or bass "
+        "note doesn't turn the vocal and guitars down with it.",
+    ),
     ("p", "Stereo width: above 100% widens everything except the bass and kick, which stay centred."),
     (
         "p",
@@ -100,6 +106,12 @@ HELP_TEXT = [
     ("h", "Saving"),
     ("p", "WAV 24-bit is what distributors like DistroKid, CD Baby and TuneCore want. Upload that."),
     ("p", "Peak ceiling (Settings): -1.0 dBTP leaves room for streaming services to convert your song cleanly."),
+    (
+        "p",
+        "Soft clip (Settings): rounds off the sharpest peaks just before the limiter, so on loud masters the "
+        "limiter doesn't have to duck the whole mix for them. Auto uses it only for masters louder than "
+        "Streaming (-14 LUFS); Always uses it every time; Off leaves it all to the limiter.",
+    ),
     ("h", "Tips"),
     (
         "p",

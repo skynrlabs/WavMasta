@@ -83,11 +83,21 @@ def album_context(app):
     return (list(page.tracks), page.album_key()) if page.album_on() else (None, None)
 
 
-def render(app, track, ceiling, album=(None, None), log=lambda m: None):
+def peak_settings(app):
+    """(ceiling, soft clip mode) from Settings, or (None, message) if the ceiling isn't valid.
+    Reads the window, so call it on the window's thread."""
+    ceiling, err = app.settings_page.ceiling()
+    if err:
+        return None, err
+    return (ceiling, app.settings_page.soft_clip()), None
+
+
+def render(app, track, peaks, album=(None, None), log=lambda m: None):
     """Load, measure and master one song (or reuse the last result). Returns a dict.
-    album: album_context(), taken on the window's thread. Safe to call from a background thread."""
+    peaks: (ceiling, soft clip mode) from peak_settings(). album: album_context(), both taken on the
+    window's thread. Safe to call from a background thread."""
     album_tracks, album_key = album
-    key = (track.path, os.path.getmtime(track.path), track.sound(), ceiling, album_key)
+    key = (track.path, os.path.getmtime(track.path), track.sound(), peaks, album_key)
     cached = app.renders.get(key)
     if cached:
         return cached
@@ -95,7 +105,7 @@ def render(app, track, ceiling, album=(None, None), log=lambda m: None):
     before = analyze(audio, sr)
     if before.lufs == float("-inf"):  # silent: nothing to master
         return {"audio": audio, "mastered": audio, "sr": sr, "before": before, "info": {"tones": []}, "key": key}
-    s = track.settings(ceiling)
+    s = track.settings(*peaks)
     reference = load(s.reference) if s.reference else None
     album = app.albums.get(album_tracks) if album_tracks else None
     mastered, info = master_audio(
@@ -207,7 +217,7 @@ class PreviewJourney:
             app.say("Add a song first, then press Before or After", "warn")
             app.show_page("master")
             return
-        ceiling, err = app.settings_page.ceiling()
+        peaks, err = peak_settings(app)
         if err:
             app.say(err, "warn")
             app.show_page("settings")
@@ -217,13 +227,13 @@ class PreviewJourney:
         app.master_page.set_playing(None)
         app.set_busy(True)
         app.say(f"Building the before/after preview of {track.name}...", "busy", "Mastering the song in memory first")
-        args = (track, which, ceiling, album_context(app))
+        args = (track, which, peaks, album_context(app))
         threading.Thread(target=self._work, args=args, daemon=True).start()
 
-    def _work(self, track, which, ceiling, album):
+    def _work(self, track, which, peaks, album):
         app = self.app
         try:
-            r = render(app, track, ceiling, album)
+            r = render(app, track, peaks, album)
             if r["before"].lufs == float("-inf"):
                 app.post(lambda: (app.set_busy(False), app.say(f"{track.name} is silent", "warn")))
                 return
@@ -307,13 +317,14 @@ class MasterJourney:
             app.say("Add at least one song first", "warn")
             app.show_page("master")
             return
-        ceiling, err = app.settings_page.ceiling()
+        peaks, err = peak_settings(app)
         if err:
             app.say(err, "warn")
             app.show_page("settings")
             return
+        ceiling = peaks[0]
         for t in tracks:
-            err = t.settings(ceiling).check()
+            err = t.settings(*peaks).check()
             if err:
                 app.say(f"{t.name}: {err}", "warn")
                 return
@@ -331,7 +342,7 @@ class MasterJourney:
         app.action.open_btn.state(["disabled"])
         app.say(f"Mastering {plural(len(tracks), 'song')}...", "busy", "Each row shows its result as it finishes")
         app.status_card.start_progress(len(tracks))
-        args = (tracks, ceiling, fmt, out_dir, album_context(app))
+        args = (tracks, peaks, fmt, out_dir, album_context(app))
         threading.Thread(target=self._work, args=args, daemon=True).start()
 
     def _status(self, track, text, kind, saved=None):
@@ -341,7 +352,7 @@ class MasterJourney:
             track.saved = saved
         self.app.master_page.show_status(track)
 
-    def _work(self, tracks, ceiling, fmt, out_dir, album_ctx):
+    def _work(self, tracks, peaks, fmt, out_dir, album_ctx):
         app = self.app
         feed = app.activity
         ok = 0
@@ -359,7 +370,7 @@ class MasterJourney:
                 )
             )
             try:
-                r = render(app, t, ceiling, album_ctx)
+                r = render(app, t, peaks, album_ctx)
                 if r["before"].lufs == float("-inf"):
                     app.post(
                         lambda s=t: (
@@ -376,7 +387,7 @@ class MasterJourney:
                 self.last_out_dir = os.path.dirname(dest)
                 result = {"before": r["before"], "after": after, "info": r["info"]}
                 details = f"{after.lufs:.1f} LUFS · peak {after.true_peak:.1f} dBTP · details below"
-                report = master_report(result, t.settings(ceiling), fmt, ceiling)
+                report = master_report(result, t.settings(*peaks), fmt, peaks[0])
                 done = f"saved · {after.lufs:.1f} LUFS"
                 app.post(
                     lambda s=t, d=details, o=dest, x=done, rep=report, rr=r: (

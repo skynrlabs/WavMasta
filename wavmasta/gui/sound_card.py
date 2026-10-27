@@ -12,6 +12,7 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 
 from ..config import AUDIO_EXTENSIONS, LOUDNESS, TONE_HINTS, TONES
+from ..core.chain import GLUE_STYLE_DEFAULT, GLUE_STYLES
 from .theme import THEME as T
 from .theme import px
 from .widgets import Bubble, slider, title_row
@@ -113,12 +114,23 @@ class SoundCard(ttk.Frame):
 
         self.glue_var, self.glue_text = tk.IntVar(value=30), tk.StringVar()
         self._slider_row(f, 4, "Glue", self.glue_var, 0, 100, 5, self.glue_text, lambda v: self._store())
+        # how the glue behaves: one band or three, fast or slow to catch the drums
+        style = ttk.Frame(f, style="Inner.TFrame")
+        style.grid(row=5, column=1, sticky="w", pady=(0, 2))
+        self.glue_style_var = tk.StringVar(value=GLUE_STYLE_DEFAULT)
+        self.glue_style_box = ttk.Combobox(
+            style, textvariable=self.glue_style_var, values=list(GLUE_STYLES), state="readonly", width=11
+        )
+        self.glue_style_box.pack(side="left")
+        self.glue_style_box.bind("<<ComboboxSelected>>", lambda e: self._store())
+        self.glue_style_hint = tk.StringVar(value=GLUE_STYLES[GLUE_STYLE_DEFAULT])
+        ttk.Label(style, textvariable=self.glue_style_hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.width_var, self.width_text = tk.IntVar(value=100), tk.StringVar()
-        self._slider_row(f, 5, "Stereo width", self.width_var, 50, 150, 5, self.width_text, lambda v: self._store())
+        self._slider_row(f, 6, "Stereo width", self.width_var, 50, 150, 5, self.width_text, lambda v: self._store())
 
-        self._label(f, 6, "Reference")
+        self._label(f, 7, "Reference")
         ref = ttk.Frame(f, style="Inner.TFrame")
-        ref.grid(row=6, column=1, sticky="w")
+        ref.grid(row=7, column=1, sticky="w")
         self.ref_btn = ttk.Button(ref, text="Choose...", style="Small.TButton", command=self.pick_reference)
         self.ref_btn.pack(side="left")
         self.ref_clear = ttk.Button(ref, text="Clear", style="Small.TButton", command=self.clear_reference)
@@ -126,13 +138,13 @@ class SoundCard(ttk.Frame):
         self.ref_hint = ttk.Label(
             f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left"
         )
-        self.ref_hint.grid(row=7, column=1, sticky="w")
+        self.ref_hint.grid(row=8, column=1, sticky="w")
         f.bind("<Configure>", lambda e: self._wrap_ref_hint(f), add="+")
         self.fade_var, self.fade_text = tk.DoubleVar(value=0.0), tk.StringVar()
-        self._slider_row(f, 8, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
+        self._slider_row(f, 9, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
         # two switches for the whole song, side by side so the card doesn't grow
         switches = ttk.Frame(f, style="Inner.TFrame")
-        switches.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        switches.grid(row=10, column=0, columnspan=2, sticky="w", pady=(4, 0))
         self.trim_var = tk.BooleanVar(value=True)
         self.trim_var.trace_add("write", lambda *_: self._store())
         self.trim_check = ttk.Checkbutton(switches, text="Trim silence at the ends", variable=self.trim_var)
@@ -143,9 +155,9 @@ class SoundCard(ttk.Frame):
         self.mono_bass_check.pack(side="left", padx=(16, 0))
 
         # hear the change right here, under the settings you just changed
-        self._label(f, 11, "Hear")
+        self._label(f, 12, "Hear")
         hear = ttk.Frame(f, style="Inner.TFrame")
-        hear.grid(row=11, column=1, sticky="w", pady=(8, 0))
+        hear.grid(row=12, column=1, sticky="w", pady=(8, 0))
         self.hear = {}
         for which in ("before", "after"):
             b = ttk.Button(hear, text=which.capitalize(), style="Small.TButton", width=8,
@@ -154,7 +166,7 @@ class SoundCard(ttk.Frame):
             self.hear[which] = b
         self.hear_text = tk.StringVar()
         self.hear_label = ttk.Label(f, textvariable=self.hear_text, style="Muted.TLabel")
-        self.hear_label.grid(row=12, column=1, sticky="w")
+        self.hear_label.grid(row=13, column=1, sticky="w")
 
     def _wrap_ref_hint(self, column):
         """Wrap the Reference hint to the room the column really has (a scrollbar can take some)."""
@@ -211,6 +223,7 @@ class SoundCard(ttk.Frame):
         self.tone_var.set(track.tone)
         self.loud_var.set(track.loudness)
         self.glue_var.set(track.glue)
+        self.glue_style_var.set(track.glue_style)
         self.width_var.set(track.width)
         self.noise_var.set(track.denoise)
         self.top_var.set(track.tame_top)
@@ -299,6 +312,8 @@ class SoundCard(ttk.Frame):
         for box in (self.tone_box, self.loud_box):
             box.state(["disabled"] if matched or self.locked else ["!disabled", "readonly"])
         self.glue_text.set(f"{t.glue}% · {glue_word(t.glue)}")
+        self.glue_style_hint.set(GLUE_STYLES.get(t.glue_style, "") if t.glue else "turn Glue up to use it")
+        self.glue_style_box.state(["disabled"] if self.locked or not t.glue else ["!disabled", "readonly"])
         self.width_text.set(f"{t.width}% · {width_word(t.width)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
         self.top_text.set("off" if not t.tame_top else f"-{t.tame_top:g} dB")
@@ -319,6 +334,7 @@ class SoundCard(ttk.Frame):
         t.tone = self.tone_var.get()
         t.loudness = self.loud_var.get()
         t.glue = int(float(self.glue_var.get()))
+        t.glue_style = self.glue_style_var.get()
         t.width = int(float(self.width_var.get()))
         t.denoise = int(float(self.noise_var.get()))
         t.tame_top = round(float(self.top_var.get()) * 2) / 2
@@ -399,6 +415,6 @@ class SoundCard(ttk.Frame):
         if self.track is not None:
             self._refresh_texts()  # restores the tone and loudness boxes (they stay off with a reference)
         else:
-            for box in (self.tone_box, self.loud_box):
+            for box in (self.tone_box, self.loud_box, self.glue_style_box):
                 box.state(["!disabled", "readonly"] if on else ["disabled"])
         self._show_hint()

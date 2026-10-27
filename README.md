@@ -20,7 +20,7 @@ Free to download. On [itch.io](https://skynrlabs.itch.io/wavmasta) it's pay what
 
 ## What Is WavMasta?
 
-WavMasta is a free desktop tool that takes your finished mix and makes it release-ready. It checks the song for problems (steady hiss, mains hum, a whine, fizzy top end), cleans them up, gives it a gentle tone shape and glue, and brings it to the right loudness for Spotify, Apple Music and YouTube with peaks kept safely under the ceiling.
+WavMasta is a free desktop tool that takes your finished mix and makes it release-ready. It checks the song for problems (steady hiss, mains hum, a whine, fizzy top end, sharp "s" sounds, bass spread too wide), cleans them up, gives it a gentle tone shape and glue, and brings it to the right loudness for Spotify, Apple Music and YouTube with peaks kept safely under the ceiling.
 
 Press **Before** and **After** on any song to hear the difference at equal loudness, then **Master** to save `<song> - master.wav` next to the original. Your original is never changed.
 
@@ -36,7 +36,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 
 ## ✨ Features
 
-- 🔍 **Check this song**: measures loudness and true peak, and finds hiss, hum, whine, harsh highs and clipping, with suggested fixes
+- 🔍 **Check this song**: measures loudness and true peak, and finds hiss, hum, whine, harsh highs, sharp "s" sounds, wide bass, parts that cancel in mono and clipping, with a suggested fix for each
 - 🧹 **Noise reduction**: a gentle de-hisser that works where hiss lives (above 1 kHz) and never touches the bass or the body of the mix
 - 🔌 **Hum and whine removal**: finds tones that sit there the whole song (50/60 Hz hum, a whine, ringing) and notches them out with very narrow filters, while the notes in your music are left alone
 - ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs; **Check** works out how many dB your song needs
@@ -47,6 +47,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
 - 🧲 **Glue and width**: bus compression to hold the mix together (Smooth, Punchy, or Three-band so a loud kick doesn't duck the vocal), and stereo width that keeps bass and kick centred
 - 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a look-ahead true-peak limiter that never clips
+- 🔊 **Soft clip**: on loud masters, the sharpest peaks are rounded off smoothly before the limiter, so the mix doesn't pump and still lands on target (Auto, Always or Off in Settings)
 - ▶️ **Fair before/after**: hear the loudest 20 seconds of the original and the master at the same loudness, right from the sound card, after every change
 - 〰️ **Waveform before and after**: the master drawn over the original, with the ceiling and the stretch you heard, so you can see what changed
 - 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
@@ -99,11 +100,11 @@ Everything happens on the **Master** page, top to bottom:
 
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
-3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
+3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match), how much **Glue** and its style (**Smooth**, **Punchy** or **Three-band**), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
 4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. They're under **Hear** at the bottom of the sound card, right below the settings, so you can tweak, listen and tweak again; the song you're hearing says *▶ playing after* in the list. Change a setting and the card tells you to press **After** again. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, what cleanup removed, trimming and the ending. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
+**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, whether the peaks were soft-clipped, what cleanup removed, trimming, the ending, the bass, and the tone and glue used. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
 
 **Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling and soft clip, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
@@ -148,6 +149,7 @@ For batch jobs and scripts. The command line comes with the pipx and source inst
 wavmasta "My Song.wav" --check
 wavmasta "My Song.wav" --tone country --auto
 wavmasta *.wav --tone roots-rock --loudness -14 --glue 40 --out masters
+wavmasta "My Song.wav" --loudness -9 --glue-style three-band
 wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
 wavmasta album/*.wav --album --fade-out 3 --out masters
 ```
@@ -180,7 +182,8 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 ## 💡 Tips
 
 - Mastering polishes a good mix; it can't fix a bad one. If the vocal is buried or the bass is boomy, fix it in the mix first.
-- Louder isn't better on streaming. Spotify and YouTube turn songs down to about -14 LUFS, so a -9 master just ends up sounding flatter.
+- Louder isn't better on streaming. Spotify and YouTube turn songs down to about -14 LUFS, so a -9 master just ends up sounding flatter. If you do want it loud, leave **Soft clip** on Auto so it keeps its punch.
+- Pick the glue style by ear: **Punchy** for songs built on live drums, **Three-band** when a big kick or bass makes the vocal dip, **Smooth** for everything else.
 - Go easy on noise reduction. 30-50% is usually enough; above about 70% it can sound watery. Always check with **After**.
 - Clipping in your mix can't be undone. If **Check** reports clipping, export the mix a few dB quieter.
 - Upload **WAV 24-bit** to your distributor (DistroKid, CD Baby, TuneCore and others).
@@ -269,9 +272,9 @@ master_file("My Song.wav", Settings(tone="Country", denoise=40, target_lufs=-14)
 |---|---|
 | Language | Python 3.10+ |
 | UI | Tkinter |
-| Audio processing | pedalboard (Spotify), NumPy, SciPy |
+| Audio processing | pedalboard (Spotify), NumPy, SciPy; Three-band glue uses a zero-phase crossover at 150 Hz and 3 kHz |
 | Loudness metering | Built-in ITU-R BS.1770-4 meter (checked against pyloudnorm in the tests) |
-| Limiter | Built-in look-ahead limiter with 4x oversampled true-peak detection |
+| Limiter | Built-in look-ahead limiter with 4x oversampled true-peak detection, and a 4x oversampled soft clipper in front of it |
 | Windows app | PyInstaller + Inno Setup |
 
 ---

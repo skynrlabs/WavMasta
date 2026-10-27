@@ -1,0 +1,6 @@
+{
+  "_help": "Copy these from Partner Center: your app > Product management > Product identity. They must match exactly, or the Store rejects the package.",
+  "name": "SkynrLabs.WavMasta",
+  "publisher": "CN=E5B2DD2D-EE35-4DD8-B0DB-9657F3E61EB7",
+  "publisher_display_name": "Skynr Labs"
+}

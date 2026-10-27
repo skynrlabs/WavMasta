@@ -1,0 +1,63 @@
+name: Build Windows installer and Store package
+
+# Runs only when started by hand: Actions → Build Windows installer and Store package → Run workflow.
+# It runs packaging/build.ps1 (the itch.io installer, with its smoke tests) and packaging/build-msix.ps1
+# (the MSIX for the Microsoft Store), then keeps both as downloads on the run page for one day.
+# The Actions tab is public, so publish them on itch.io and the Store, not here; delete the run once
+# you've downloaded them.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup --no-progress -y }
+
+      - name: Build and smoke test the installer (packaging/build.ps1)
+        shell: pwsh
+        run: .\packaging\build.ps1
+
+      - name: Build the Store package (packaging/build-msix.ps1)
+        shell: pwsh
+        run: .\packaging\build-msix.ps1
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: '"version=$(python -c "import wavmasta; print(wavmasta.__version__)")" >> $env:GITHUB_OUTPUT'
+
+      - name: Report sizes
+        shell: pwsh
+        run: |
+          Get-ChildItem dist\installer\*.exe, dist\msix\*.msix | ForEach-Object {
+            "::notice title=$($_.Name)::$([math]::Round($_.Length / 1MB, 1)) MB"
+          }
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: WavMasta-Setup-${{ steps.ver.outputs.version }}
+          path: dist/installer/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: WavMasta-Store-${{ steps.ver.outputs.version }}
+          path: dist/msix/*.msix
+          retention-days: 1
+          if-no-files-found: error

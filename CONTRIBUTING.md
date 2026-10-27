@@ -95,13 +95,18 @@ pytest                  # all tests, about 35 seconds
 
 ## Releasing
 
-The Windows installer is built on a Windows PC, not on GitHub (the Actions tab is public, and downloads go through itch.io). You need Python 3.11 and [Inno Setup 6](https://jrsoftware.org/isdl.php).
+Each release goes out in two forms: an installer for [itch.io](https://skynrlabs.itch.io/wavmasta) and an MSIX package for the Microsoft Store. Both are built from `main`.
 
 1. Bump `__version__` in `wavmasta/__init__.py`, and get the change into `main` through `dev`.
-2. On `main`, run `.\packaging\build.ps1` in PowerShell. It builds the app, checks that it masters a test song, and writes `dist\installer\WavMasta-Setup-x.y.z.exe`.
-3. Install it and give it a quick try.
-4. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.0`), list what changed, and click **Publish release**. Don't attach the installer.
+2. Build, one of two ways:
+   - **On GitHub:** go to **Actions → Build Windows installer and Store package → Run workflow** (on `main`). When it finishes, download `WavMasta-Setup-x.y.z` and `WavMasta-Store-x.y.z` from the run's **Artifacts**. They're kept for one day; the Actions tab is public, so delete the run once you have them.
+   - **On a Windows PC:** you need Python 3.11, [Inno Setup 6](https://jrsoftware.org/isdl.php) and the [Windows SDK](https://developer.microsoft.com/windows/downloads/windows-sdk/). On `main`, run `.\packaging\build.ps1` (it builds the app, checks that it masters a test song, and writes `dist\installer\WavMasta-Setup-x.y.z.exe`), then `.\packaging\build-msix.ps1` (it writes `dist\msix\WavMasta-x.y.z.0-x64.msix`).
+3. Install the installer and give it a quick try.
+4. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.0`), list what changed, and click **Publish release**. Don't attach the files.
 5. Upload the installer to the [itch.io page](https://skynrlabs.itch.io/wavmasta).
+6. In Partner Center, start a new submission, upload the `.msix` under **Packages**, and submit. The Store signs it, so no certificate is needed. Each Store version must be higher than the last one.
+
+The MSIX takes its identity from `packaging/msix/identity.json`, which must match **Partner Center → Product identity** exactly. While it still says `REPLACE`, `build-msix.ps1` makes a `-TEST` package the Store won't accept.
 
 ---
 

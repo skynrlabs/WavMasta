@@ -1,7 +1,7 @@
 # <img src="wavmasta/assets/icon-64.png" alt="" width="48" align="center"> WavMasta
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-free-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -13,7 +13,7 @@
   <a href="https://apps.microsoft.com/detail/9NBM4FQGLK8V"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-Free on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/wavmasta), where it's pay what you want: the suggested price is $2, and $0 is fine too.
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/wavmasta), where it's pay what you want: the suggested price is $2, and $0 is fine too.
 
 ![WavMasta screenshot](docs/screenshot.png)
 
@@ -21,7 +21,7 @@ Free on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). P
 
 ## What Is WavMasta?
 
-WavMasta is a free desktop tool that takes your finished mix and makes it release-ready. It checks the song for problems (steady hiss, mains hum, a whine, fizzy top end, sharp "s" sounds, bass spread too wide), cleans them up, gives it a gentle tone shape and glue, and brings it to the right loudness for Spotify, Apple Music and YouTube with peaks kept safely under the ceiling.
+WavMasta is an open-source desktop tool that takes your finished mix and makes it release-ready. It checks the song for problems (steady hiss, mains hum, a whine, fizzy top end, sharp "s" sounds, bass spread too wide), cleans them up, gives it a gentle tone shape and glue, and brings it to the right loudness for Spotify, Apple Music and YouTube with peaks kept safely under the ceiling.
 
 Press **Before** and **After** on any song to hear the difference at equal loudness, then **Master** to save `<song> - master.wav` next to the original. Your original is never changed.
 
@@ -65,10 +65,10 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 
 ### Windows: Microsoft Store (recommended)
 
-1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and click **Get** (it's free).
+1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and buy it ($4.99 USD, or the local price where you are).
 2. Open **WavMasta** from the Start menu.
 
-The Store version is signed by Microsoft, so there's no security warning, and it **updates itself** automatically. To remove it, use **Settings → Apps → WavMasta → Uninstall**.
+The Store version is signed by Microsoft, so there's no security warning, and it **updates itself** automatically. Every update is free. To remove it, use **Settings → Apps → WavMasta → Uninstall**.
 
 ### Windows: installer from itch.io
 
@@ -295,7 +295,7 @@ WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. 
 
 ## 💜 Support WavMasta
 
-WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($2 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
+WavMasta is free and open source, made by one person. If it saves you time, you can buy it on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($2 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
 
 ---
 

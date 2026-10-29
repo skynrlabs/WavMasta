@@ -112,3 +112,17 @@ def test_glue_style_and_soft_clip_flags(tmp_path, monkeypatch):
     assert seen[1].glue_style == "Smooth" and seen[1].soft_clip == "Auto"
     with pytest.raises(SystemExit):
         main([src, "--glue-style", "wobbly"])
+
+
+def test_match_flag(tmp_path, monkeypatch):
+    import wavmasta.cli as cli
+
+    from . import synth
+
+    src = synth.write(tmp_path / "Song.wav", synth.mix(seconds=6) * 0.4)
+    ref = synth.write(tmp_path / "Ref.wav", synth.mix(seconds=6, seed=4) * 0.6)
+    seen = []
+    real = cli.master_file
+    monkeypatch.setattr(cli, "master_file", lambda song, s, *a, **k: (seen.append(s), real(song, s, *a, **k))[1])
+    assert main([src, "--reference", ref, "--match", "60", "--out", str(tmp_path / "out")]) == 0
+    assert seen[0].match == 60 and seen[0].reference == ref

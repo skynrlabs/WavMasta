@@ -45,18 +45,29 @@ HELP_TEXT = [
         "Loudness: how loud the finished song is, in LUFS. Louder isn't better on streaming: a -9 LUFS master "
         "is turned down to -14 and just sounds flatter than a -14 master.",
     ),
-    ("p", "Glue: gentle compression that holds the mix together. 20-40% is natural; more gets punchy and dense."),
+    (
+        "p",
+        "Glue: gentle compression that holds the mix together. 20-40% is natural; more gets punchy and dense. "
+        "With a Reference, WavMasta sets the amount to match the reference's density.",
+    ),
     (
         "p",
         "Glue style: Smooth is even and gentle. Punchy waits a moment before it acts, so the start of each drum "
         "hit gets through. Three-band compresses the bass, mids and highs separately, so a loud kick or bass "
         "note doesn't turn the vocal and guitars down with it.",
     ),
-    ("p", "Stereo width: above 100% widens everything except the bass and kick, which stay centred."),
     (
         "p",
-        "Reference: choose a finished, released song you like the sound of. WavMasta matches its tonal balance "
-        "and loudness instead of using Tone and Loudness. Pick one in the same style as yours.",
+        "Stereo width: above 100% widens everything except the bass and kick, which stay centred. With a "
+        "Reference, it's set to match the reference's width.",
+    ),
+    (
+        "p",
+        "Reference: choose a finished, released song you like the sound of. WavMasta measures it and matches "
+        "its tonal balance, its density (how compressed it is), its stereo width and its loudness, instead of "
+        "using Tone, Loudness, Glue and Stereo width. Match sets how closely: 80% stops a little short of a "
+        "full match, which usually sounds most natural; 100% goes all the way. History shows exactly what it "
+        "changed. Pick a reference in the same style as your song.",
     ),
     (
         "p",

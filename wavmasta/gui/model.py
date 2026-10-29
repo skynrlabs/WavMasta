@@ -10,7 +10,7 @@ from ..core.chain import GLUE_STYLE_DEFAULT
 
 SOUND_FIELDS = (
     "tone", "loudness", "denoise", "fix_tones", "tame_top", "glue", "width", "reference", "deess", "fade_out", "trim",
-    "mono_bass", "glue_style",
+    "mono_bass", "glue_style", "match",
 )  # fmt: skip
 
 
@@ -26,6 +26,7 @@ class Track:
     glue_style: str = GLUE_STYLE_DEFAULT  # Smooth, Punchy or Three-band
     width: int = 100
     reference: str | None = None
+    match: int = 80  # how closely to match the reference, 0-100 %
     deess: int = 0
     fade_out: float = 0.0
     trim: bool = True
@@ -58,6 +59,7 @@ class Track:
             glue_style=self.glue_style,
             width=self.width,
             reference=self.reference,
+            match=self.match,
             deess=self.deess,
             fade_out=self.fade_out,
             trim=self.trim,

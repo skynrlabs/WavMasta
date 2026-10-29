@@ -41,7 +41,8 @@ def build_parser():
         help="smooth (default), punchy (lets drum hits through) or three-band (a loud kick doesn't duck the rest)",
     )  # fmt: skip
     ap.add_argument("--width", type=int, default=100, help="stereo width 0-150 (default: 100)")
-    ap.add_argument("--reference", help="a finished song to match tone and loudness to")
+    ap.add_argument("--reference", help="a finished song to match tone, density, width and loudness to")
+    ap.add_argument("--match", type=int, default=80, help="how closely to match --reference, 0-100 (default: 80)")
     ap.add_argument("--deess", type=int, default=0, help="tame sharp 's' sounds in vocals, 0-100 (default: 0, off)")
     ap.add_argument("--fade-out", type=float, default=0.0, help="fade the end over this many seconds, 0-10")
     ap.add_argument("--no-trim", action="store_true", help="keep silence at the start and end")
@@ -87,6 +88,7 @@ def main(argv=None):
             glue_style=GLUE_STYLE_KEYS[a.glue_style],
             width=a.width,
             reference=a.reference,
+            match=a.match,
             deess=a.deess,
             fade_out=a.fade_out,
             trim=not a.no_trim,

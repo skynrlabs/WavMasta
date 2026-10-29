@@ -33,7 +33,7 @@ body:
     attributes:
       label: WavMasta version
       description: Shown at the bottom of the sidebar, or in Help → About.
-      placeholder: "1.3.0"
+      placeholder: "1.4.0"
     validations:
       required: true
   - type: dropdown

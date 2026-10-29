@@ -13,7 +13,7 @@
   <a href="https://apps.microsoft.com/detail/9NBM4FQGLK8V"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-$4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/wavmasta), where it's pay what you want: the suggested price is $2, and $0 is fine too.
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/wavmasta), where it's pay what you want: the suggested price is $4.99, and $0 is fine too.
 
 ![WavMasta screenshot](docs/screenshot.png)
 
@@ -72,7 +72,7 @@ The Store version is signed by Microsoft, so there's no security warning, and it
 
 ### Windows: installer from itch.io
 
-1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want: $2 suggested, $0 is fine).
+1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want: $4.99 suggested, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed.
 3. Open **WavMasta** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -295,7 +295,7 @@ WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. 
 
 ## 💜 Support WavMasta
 
-WavMasta is free and open source, made by one person. If it saves you time, you can buy it on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($2 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
+WavMasta is free and open source, made by one person. If it saves you time, you can buy it on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($4.99 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
 
 ---
 

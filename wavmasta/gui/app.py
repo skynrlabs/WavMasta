@@ -198,6 +198,7 @@ class WavMastaApp:
 
         self.status_card = StatusCard(main, self.fonts)
         self.status_card.grid(row=2, column=0, sticky="ew", pady=(4, 10))
+        self.master_page.card.on_note = lambda msg, detail: self.say(msg, "muted", detail)
         self.action = ActionBar(main)
         self.action.grid(row=3, column=0, sticky="ew")
 

@@ -66,8 +66,10 @@ HELP_TEXT = [
         "Reference: choose a finished, released song you like the sound of. WavMasta measures it and matches "
         "its tonal balance, its density (how compressed it is), its stereo width and its loudness, instead of "
         "using Tone, Loudness, Glue and Stereo width. Match sets how closely: 80% stops a little short of a "
-        "full match, which usually sounds most natural; 100% goes all the way. History shows exactly what it "
-        "changed. Pick a reference in the same style as your song.",
+        "full match, which usually sounds most natural; 100% goes all the way. While a reference is chosen, "
+        "Tone, Loudness, Glue and Stereo width are locked, and Glue and Stereo width say 'locked by reference'. "
+        "Lower Match for less of the reference's sound, or Clear the reference to set them yourself; the glue "
+        "style is still yours. History shows exactly what it changed. Pick a reference in the same style as your song.",
     ),
     (
         "p",

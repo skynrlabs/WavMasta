@@ -615,7 +615,10 @@ def test_reference_match_strength_and_report(app, monkeypatch, copies):
     app.root.update()
     assert card.match_slider.winfo_ismapped() and not card.ref_hint.winfo_ismapped()
     assert card.match_text.get() == "80% · natural"
-    assert card.glue_text.get() == "from the reference" and card.width_text.get() == "from the reference"
+    assert card.glue_text.get() == "locked by reference" == card.width_text.get()
+    assert str(card.value_labels[card.glue_slider].cget("style")) == "Locked.TLabel"
+    card._explain_lock()  # what clicking a locked slider does
+    assert "follow the reference" in status(app)
     assert card.glue_slider.cget("state") == "disabled" and card.width_slider.cget("state") == "disabled"
     assert not card.glue_style_box.instate(["disabled"])  # the style is still yours to choose
     card.match_var.set(100)
@@ -628,6 +631,25 @@ def test_reference_match_strength_and_report(app, monkeypatch, copies):
     card.clear_reference()
     app.root.update()
     assert card.glue_slider.cget("state") == "normal" and not card.match_slider.winfo_ismapped()
+
+
+def test_moving_a_slider_by_hand_stores_once_and_never_loops(app, monkeypatch, copies):
+    # Tk fires a slider's command when the slider is reconfigured, so redrawing the sliders from
+    # inside that command used to loop until Python gave up (RecursionError after moving Stereo width)
+    add(app, monkeypatch, [copies["clean"]])
+    card, t = page(app).card, page(app).tracks[0]
+    errors = []
+    monkeypatch.setattr(app.root, "report_callback_exception", lambda *a: errors.append(a[1]))
+    calls = []
+    real = card._store_now
+    monkeypatch.setattr(card, "_store_now", lambda: (calls.append(1), real())[1])
+    for sl, value in ((card.width_slider, 120), (card.glue_slider, 50)):
+        sl.set(value)
+        for _ in range(10):
+            app.root.update()
+    assert errors == []
+    assert t.width == 120 and t.glue == 50
+    assert len(calls) <= 4  # one or two per move, not hundreds
 
 
 def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):

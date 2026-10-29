@@ -125,6 +125,8 @@ def apply_styles(root, F):
     st.configure("Title.TLabel", font=F["title"])
     st.configure("Sub.TLabel", foreground=T["muted"], font=F["sub"])
     st.configure("Value.TLabel", background=T["card"], foreground=T["accent_soft"], font=F["btn"])
+    # a slider the reference is in charge of: greyed, so it reads as locked rather than as a value
+    st.configure("Locked.TLabel", background=T["card"], foreground=T["muted"], font=F["btn"])
     st.configure(
         "TButton",
         background=T["line"],

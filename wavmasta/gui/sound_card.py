@@ -36,6 +36,13 @@ def fade_word(v):
     return "none" if v == 0 else f"{v:g} s"
 
 
+LOCKED = "locked by reference"
+LOCKED_NOTE = (
+    "Glue and Stereo width follow the reference song",
+    "Lower Match for less of its sound, or Clear the reference to set them yourself",
+)
+
+
 def match_word(v):
     return (
         "loudness only" if v == 0 else "a light touch" if v < 50 else "partway" if v < 75
@@ -53,10 +60,13 @@ class SoundCard(ttk.Frame):
         self.track = None
         self.on_play = on_play  # called with "before" or "after" (plays it, or stops it if it's playing)
         self.on_change = on_change
+        self.on_note = None  # called with (message, detail) to tell the user something
         self._loading = False
+        self._storing = False
         self.locked = False
         self.lock_note = ""
         self.sliders = []
+        self.value_labels = {}  # slider -> the label showing its value
         self.columnconfigure(0, weight=1)
 
         top = title_row(self, "Sound", upper=False)
@@ -97,13 +107,19 @@ class SoundCard(ttk.Frame):
         s = slider(f, var, lo, hi, step, on_move, length=SLIDER)
         s.pack(side="left")
         self.sliders.append(s)
-        ttk.Label(f, textvariable=text_var, style="Value.TLabel").pack(side="left", padx=(10, 0))
+        value = ttk.Label(f, textvariable=text_var, style="Value.TLabel")
+        value.pack(side="left", padx=(10, 0))
+        self.value_labels[s] = value
         return s
 
     @staticmethod
     def _slider_on(s, on):
-        s.configure(state="normal" if on else "disabled", bg=T["accent"] if on else T["line_hover"],
-                    cursor="" if on else "arrow")  # fmt: skip
+        """Turn a slider on or off. Reconfiguring a Tk slider fires its command again, so only touch it
+        when its state really changes (otherwise moving a slider would loop forever)."""
+        state = "normal" if on else "disabled"
+        if str(s.cget("state")) == state:
+            return
+        s.configure(state=state, bg=T["accent"] if on else T["line_hover"], cursor="" if on else "arrow")
 
     # ---- left: mastering
     def _build_master(self, f):
@@ -163,6 +179,9 @@ class SoundCard(ttk.Frame):
             f, 8, "Match", self.match_var, 0, 100, 5, self.match_text, lambda v: self._store()
         )
         self.match_widgets = [w for w in f.grid_slaves(row=8) if w is not self.ref_hint]
+        # clicking a locked slider says why it won't move
+        for sl in (self.glue_slider, self.width_slider):
+            sl.bind("<Button-1>", lambda e: self._explain_lock(), add="+")
         for w in self.match_widgets:
             w.grid_remove()
         f.bind("<Configure>", lambda e: self._wrap_ref_hint(f), add="+")
@@ -343,12 +362,13 @@ class SoundCard(ttk.Frame):
         for box in (self.tone_box, self.loud_box):
             box.state(["disabled"] if matched or self.locked else ["!disabled", "readonly"])
         glue_on = t.glue or matched
-        self.glue_text.set("from the reference" if matched else f"{t.glue}% · {glue_word(t.glue)}")
+        self.glue_text.set(LOCKED if matched else f"{t.glue}% · {glue_word(t.glue)}")
         self.glue_style_hint.set(GLUE_STYLES.get(t.glue_style, "") if glue_on else "turn Glue up to use it")
         self.glue_style_box.state(["disabled"] if self.locked or not glue_on else ["!disabled", "readonly"])
-        self.width_text.set("from the reference" if matched else f"{t.width}% · {width_word(t.width)}")
+        self.width_text.set(LOCKED if matched else f"{t.width}% · {width_word(t.width)}")
         for sl in (self.glue_slider, self.width_slider):
             self._slider_on(sl, not self.locked and not matched)
+            self.value_labels[sl].configure(style="Locked.TLabel" if matched else "Value.TLabel")
         self.match_text.set(f"{t.match}% · {match_word(t.match)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
         self.top_text.set("off" if not t.tame_top else f"-{t.tame_top:g} dB")
@@ -370,8 +390,15 @@ class SoundCard(ttk.Frame):
 
     # ---- writing changes back to the song
     def _store(self):
-        if self._loading or self.track is None:
+        if self._loading or self._storing or self.track is None:
             return
+        self._storing = True
+        try:
+            self._store_now()
+        finally:
+            self._storing = False
+
+    def _store_now(self):
         t = self.track
         t.tone = self.tone_var.get()
         t.loudness = self.loud_var.get()
@@ -410,6 +437,13 @@ class SoundCard(ttk.Frame):
             self._refresh_texts()
             if self.on_change:
                 self.on_change()
+
+    def _explain_lock(self):
+        """A click on Glue or Stereo width while a reference sets them: say so, beside the title."""
+        if self.track is None or not self.track.reference or self.locked:
+            return
+        if self.on_note:
+            self.on_note(*LOCKED_NOTE)
 
     def _show_hint(self):
         if self.track is None:
@@ -450,11 +484,7 @@ class SoundCard(ttk.Frame):
         ):  # fmt: skip
             b.state(["!disabled"] if on else ["disabled"])
         for s in self.sliders:
-            s.configure(
-                state="normal" if on else "disabled",
-                bg=T["accent"] if on else T["line_hover"],
-                cursor="" if on else "arrow",
-            )
+            self._slider_on(s, on)
         if self.track is not None:
             self._refresh_texts()  # restores the tone and loudness boxes (they stay off with a reference)
         else:

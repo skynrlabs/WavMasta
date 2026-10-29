@@ -31,6 +31,24 @@ def _clock(seconds):
     return f"{int(seconds // 60)}:{int(round(seconds % 60)):02d}"
 
 
+def describe_reference(ref):
+    """What matching the reference changed: (the EQ moves, the density), e.g.
+    ('EQ +3 dB at 60 Hz, -2 dB at 8 kHz', 'level moves 1.4 dB, like the reference's 1.3 dB')."""
+
+    def hz(f):
+        return f"{f / 1000:g} kHz" if f >= 1000 else f"{f} Hz"
+
+    eq = "EQ " + ", ".join(f"{g:+.0f} dB at {hz(f)}" for f, g in ref["eq"]) if ref["eq"] else "tone already close"
+    move = ref.get("movement", {})
+    if move.get("reference") is None:
+        return eq, "matched to the reference"
+    mine, theirs = move["master"], move["reference"]
+    close = abs(mine - theirs) < 0.25
+    density = f"level moves {mine:.1f} dB" + (f", like the reference's {theirs:.1f} dB" if close
+                                               else f" (reference {theirs:.1f} dB)")  # fmt: skip
+    return eq, density
+
+
 def master_report(result, settings, fmt, ceiling):
     """The breakdown shown under a mastered song: [(label, result, details, good), ...]."""
     before, after, info = result["before"], result["after"], result["info"]
@@ -121,12 +139,16 @@ def master_report(result, settings, fmt, ceiling):
             ("Mono", f"-{before.mono_loss:.0f} dB in places", "an out-of-phase part cancels on mono speakers", False)
         )
     # sound and file
-    tone = f"matched to {os.path.basename(settings.reference)}" if settings.reference else settings.tone
-    if info.get("album"):
-        tone += " · album tone"
-    glue = f"glue {settings.glue}% {settings.glue_style.lower()}" if settings.glue else "no glue"
-    extra = f"{glue} · width {settings.width}%"
-    rows.append(("Sound", tone, extra, True))
+    ref = info.get("reference")
+    if ref:
+        eq, density = describe_reference(ref)
+        rows.append(("Reference", f"{ref['name']} · {ref['strength']}%", eq, True))
+        glue = f"glue {ref['glue']}% {settings.glue_style.lower()}" if ref["glue"] else "no glue"
+        rows.append(("Density & width", f"{glue} · width {ref['width']}%", density, True))
+    else:
+        tone = settings.tone + (" · album tone" if info.get("album") else "")
+        glue = f"glue {settings.glue}% {settings.glue_style.lower()}" if settings.glue else "no glue"
+        rows.append(("Sound", tone, f"{glue} · width {settings.width}%", True))
     rows.append(
         ("File", fmt, f"{after.sample_rate / 1000:g} kHz · {_clock(after.duration)} · original unchanged", True)
     )

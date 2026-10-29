@@ -36,6 +36,13 @@ def fade_word(v):
     return "none" if v == 0 else f"{v:g} s"
 
 
+def match_word(v):
+    return (
+        "loudness only" if v == 0 else "a light touch" if v < 50 else "partway" if v < 75
+        else "natural" if v < 90 else "close" if v < 100 else "full match"
+    )  # fmt: skip
+
+
 def width_word(v):
     return "as mixed" if v == 100 else "mono" if v == 0 else "narrower" if v < 100 else "wider"
 
@@ -91,6 +98,12 @@ class SoundCard(ttk.Frame):
         s.pack(side="left")
         self.sliders.append(s)
         ttk.Label(f, textvariable=text_var, style="Value.TLabel").pack(side="left", padx=(10, 0))
+        return s
+
+    @staticmethod
+    def _slider_on(s, on):
+        s.configure(state="normal" if on else "disabled", bg=T["accent"] if on else T["line_hover"],
+                    cursor="" if on else "arrow")  # fmt: skip
 
     # ---- left: mastering
     def _build_master(self, f):
@@ -113,7 +126,9 @@ class SoundCard(ttk.Frame):
         self.loud_box.bind("<<ComboboxSelected>>", lambda e: self._store())
 
         self.glue_var, self.glue_text = tk.IntVar(value=30), tk.StringVar()
-        self._slider_row(f, 4, "Glue", self.glue_var, 0, 100, 5, self.glue_text, lambda v: self._store())
+        self.glue_slider = self._slider_row(
+            f, 4, "Glue", self.glue_var, 0, 100, 5, self.glue_text, lambda v: self._store()
+        )
         # how the glue behaves: one band or three, fast or slow to catch the drums
         style = ttk.Frame(f, style="Inner.TFrame")
         style.grid(row=5, column=1, sticky="w", pady=(0, 2))
@@ -126,7 +141,9 @@ class SoundCard(ttk.Frame):
         self.glue_style_hint = tk.StringVar(value=GLUE_STYLES[GLUE_STYLE_DEFAULT])
         ttk.Label(style, textvariable=self.glue_style_hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.width_var, self.width_text = tk.IntVar(value=100), tk.StringVar()
-        self._slider_row(f, 6, "Stereo width", self.width_var, 50, 150, 5, self.width_text, lambda v: self._store())
+        self.width_slider = self._slider_row(
+            f, 6, "Stereo width", self.width_var, 50, 150, 5, self.width_text, lambda v: self._store()
+        )
 
         self._label(f, 7, "Reference")
         ref = ttk.Frame(f, style="Inner.TFrame")
@@ -134,11 +151,20 @@ class SoundCard(ttk.Frame):
         self.ref_btn = ttk.Button(ref, text="Choose...", style="Small.TButton", command=self.pick_reference)
         self.ref_btn.pack(side="left")
         self.ref_clear = ttk.Button(ref, text="Clear", style="Small.TButton", command=self.clear_reference)
+        self.ref_name = tk.StringVar()
         self.ref_text = tk.StringVar()
         self.ref_hint = ttk.Label(
             f, textvariable=self.ref_text, style="Muted.TLabel", wraplength=px(f, 300), justify="left"
         )
         self.ref_hint.grid(row=8, column=1, sticky="w")
+        # with a reference, the hint's line becomes how closely to match it
+        self.match_var, self.match_text = tk.IntVar(value=80), tk.StringVar()
+        self.match_slider = self._slider_row(
+            f, 8, "Match", self.match_var, 0, 100, 5, self.match_text, lambda v: self._store()
+        )
+        self.match_widgets = [w for w in f.grid_slaves(row=8) if w is not self.ref_hint]
+        for w in self.match_widgets:
+            w.grid_remove()
         f.bind("<Configure>", lambda e: self._wrap_ref_hint(f), add="+")
         self.fade_var, self.fade_text = tk.DoubleVar(value=0.0), tk.StringVar()
         self._slider_row(f, 9, "Fade-out", self.fade_var, 0, 10, 0.5, self.fade_text, lambda v: self._store())
@@ -223,6 +249,7 @@ class SoundCard(ttk.Frame):
         self.tone_var.set(track.tone)
         self.loud_var.set(track.loudness)
         self.glue_var.set(track.glue)
+        self.match_var.set(track.match)
         self.glue_style_var.set(track.glue_style)
         self.width_var.set(track.width)
         self.noise_var.set(track.denoise)
@@ -308,23 +335,38 @@ class SoundCard(ttk.Frame):
         if t is None:
             return
         matched = bool(t.reference)
-        self.tone_hint.set("matched to the reference" if matched else TONE_HINTS.get(t.tone, ""))
+        if matched:
+            name = os.path.basename(t.reference)
+            self.tone_hint.set("matched to " + (name if len(name) <= 34 else name[:32] + "…"))
+        else:
+            self.tone_hint.set(TONE_HINTS.get(t.tone, ""))
         for box in (self.tone_box, self.loud_box):
             box.state(["disabled"] if matched or self.locked else ["!disabled", "readonly"])
-        self.glue_text.set(f"{t.glue}% · {glue_word(t.glue)}")
-        self.glue_style_hint.set(GLUE_STYLES.get(t.glue_style, "") if t.glue else "turn Glue up to use it")
-        self.glue_style_box.state(["disabled"] if self.locked or not t.glue else ["!disabled", "readonly"])
-        self.width_text.set(f"{t.width}% · {width_word(t.width)}")
+        glue_on = t.glue or matched
+        self.glue_text.set("from the reference" if matched else f"{t.glue}% · {glue_word(t.glue)}")
+        self.glue_style_hint.set(GLUE_STYLES.get(t.glue_style, "") if glue_on else "turn Glue up to use it")
+        self.glue_style_box.state(["disabled"] if self.locked or not glue_on else ["!disabled", "readonly"])
+        self.width_text.set("from the reference" if matched else f"{t.width}% · {width_word(t.width)}")
+        for sl in (self.glue_slider, self.width_slider):
+            self._slider_on(sl, not self.locked and not matched)
+        self.match_text.set(f"{t.match}% · {match_word(t.match)}")
         self.noise_text.set(f"{t.denoise}% · {denoise_word(t.denoise)}")
         self.top_text.set("off" if not t.tame_top else f"-{t.tame_top:g} dB")
         self.deess_text.set(f"{t.deess}% · {deess_word(t.deess)}")
         self.fade_text.set(fade_word(t.fade_out))
         if matched:
-            self.ref_text.set(f"Matching tone and loudness to {os.path.basename(t.reference)}")
+            self.ref_name.set(os.path.basename(t.reference))  # shown under Tone, where there's room
             self.ref_clear.pack(side="left", padx=(6, 0))
+            self.ref_hint.grid_remove()
+            for w in self.match_widgets:
+                w.grid()
         else:
-            self.ref_text.set("Optional: match a finished song's tone and loudness")
+            self.ref_text.set("Optional: match a finished song's tone, density, width and loudness")
             self.ref_clear.pack_forget()
+            self.ref_name.set("")
+            for w in self.match_widgets:
+                w.grid_remove()
+            self.ref_hint.grid()
 
     # ---- writing changes back to the song
     def _store(self):
@@ -334,6 +376,7 @@ class SoundCard(ttk.Frame):
         t.tone = self.tone_var.get()
         t.loudness = self.loud_var.get()
         t.glue = int(float(self.glue_var.get()))
+        t.match = int(float(self.match_var.get()))
         t.glue_style = self.glue_style_var.get()
         t.width = int(float(self.width_var.get()))
         t.denoise = int(float(self.noise_var.get()))

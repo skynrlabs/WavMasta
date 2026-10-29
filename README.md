@@ -1,6 +1,7 @@
 # <img src="wavmasta/assets/icon-64.png" alt="" width="48" align="center"> WavMasta
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-free-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -9,10 +10,10 @@
 > Hiss, hum and harsh highs out. Streaming-ready loudness in.
 
 <p>
-  <a href="https://skynrlabs.itch.io/wavmasta"><img src="https://img.shields.io/badge/Download_for_Windows-8b5cf6?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://apps.microsoft.com/detail/9NBM4FQGLK8V"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-Free to download. On [itch.io](https://skynrlabs.itch.io/wavmasta) it's pay what you want: the suggested price is $2, and $0 is fine too.
+Free on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/wavmasta), where it's pay what you want: the suggested price is $2, and $0 is fine too.
 
 ![WavMasta screenshot](docs/screenshot.png)
 
@@ -62,15 +63,22 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 
 ## 📥 Install
 
-### Windows (recommended)
+### Windows: Microsoft Store (recommended)
+
+1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and click **Get** (it's free).
+2. Open **WavMasta** from the Start menu.
+
+The Store version is signed by Microsoft, so there's no security warning, and it **updates itself** automatically. To remove it, use **Settings → Apps → WavMasta → Uninstall**.
+
+### Windows: installer from itch.io
 
 1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want: $2 suggested, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed.
 3. Open **WavMasta** from the Start menu (or the desktop shortcut, if you ticked it).
 
-> Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
+> Windows may show **"Windows protected your PC"** because this installer isn't code-signed. Click **More info → Run anyway**, or get the signed version from the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V).
 
-To update, run the newer installer. To remove, use **Settings → Apps → WavMasta → Uninstall**.
+To update, run the newer installer. To remove, use **Settings → Apps → WavMasta → Uninstall**. Use one version or the other, not both.
 
 ### macOS and Linux
 
@@ -194,7 +202,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 
 | Problem | Fix |
 |---|---|
-| **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
+| **"Windows protected your PC"** when installing | That's the itch.io installer, which isn't code-signed. Click **More info → Run anyway**, or install the signed version from the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). |
 | The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, lower **Glue** to 20-30%, or try the **Punchy** glue style. |
 | The vocal dips every time the kick or bass hits | Set the glue style to **Three-band**. |
 | Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
@@ -248,7 +256,7 @@ wavmasta/
     └── theme.py         Colours, fonts and styles
 wavmasta/assets/         App icon (SVG source, PNGs and Windows .ico)
 tests/                   Tests with synthetic songs (pytest), incl. window tests
-packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
+packaging/               Windows build: PyInstaller spec, Inno Setup installer (build.ps1) and Microsoft Store package (build-msix.ps1)
 .github/workflows/       Lint and tests on Linux
 docs/                    README screenshot
 ```
@@ -275,7 +283,7 @@ master_file("My Song.wav", Settings(tone="Country", denoise=40, target_lufs=-14)
 | Audio processing | pedalboard (Spotify), NumPy, SciPy; Three-band glue uses a zero-phase crossover at 150 Hz and 3 kHz |
 | Loudness metering | Built-in ITU-R BS.1770-4 meter (checked against pyloudnorm in the tests) |
 | Limiter | Built-in look-ahead limiter with 4x oversampled true-peak detection, and a 4x oversampled soft clipper in front of it |
-| Windows app | PyInstaller + Inno Setup |
+| Windows app | PyInstaller, with Inno Setup (itch.io installer) and MSIX (Microsoft Store) |
 
 ---
 
@@ -287,7 +295,7 @@ WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. 
 
 ## 💜 Support WavMasta
 
-WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($2 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other musicians helps too.
+WavMasta is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/wavmasta) ($2 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
 
 ---
 
@@ -320,4 +328,4 @@ The Windows app installs every bundled library's license in full as `THIRD_PARTY
 
 ---
 
-Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/wavmasta) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/wavmasta) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)

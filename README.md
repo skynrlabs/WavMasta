@@ -45,7 +45,7 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 - ✂️ **Trim and fade**: cuts dead air off both ends (without clicks) and fades the ending smoothly; **Check** spots songs that stop suddenly
 - 🔈 **Keep bass centred**: folds the bass below 120 Hz to mono so it holds up on phones and small speakers; **Check** suggests it when the bass is spread wide, and warns when parts of a song cancel out in mono
 - 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
-- 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance and loudness
+- 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance, density, stereo width and loudness, as closely as you choose, and History shows exactly what it changed
 - 🧲 **Glue and width**: bus compression to hold the mix together (Smooth, Punchy, or Three-band so a loud kick doesn't duck the vocal), and stereo width that keeps bass and kick centred
 - 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a look-ahead true-peak limiter that never clips
 - 🔊 **Soft clip**: on loud masters, the sharpest peaks are rounded off smoothly before the limiter, so the mix doesn't pump and still lands on target (Auto, Always or Off in Settings)
@@ -108,11 +108,11 @@ Everything happens on the **Master** page, top to bottom:
 
 1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF, OGG or M4A). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
 2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
-3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match), how much **Glue** and its style (**Smooth**, **Punchy** or **Three-band**), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
+3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match, and how closely with **Match**), how much **Glue** and its style (**Smooth**, **Punchy** or **Three-band**), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
 4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. They're under **Hear** at the bottom of the sound card, right below the settings, so you can tweak, listen and tweak again; the song you're hearing says *▶ playing after* in the list. Change a setting and the card tells you to press **After** again. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
 5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
 
-**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, whether the peaks were soft-clipped, what cleanup removed, trimming, the ending, the bass, and the tone and glue used. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
+**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, whether the peaks were soft-clipped, what cleanup removed, trimming, the ending, the bass, and the tone and glue used. A song matched to a reference shows what the match changed: the EQ moves, the glue and width it chose, and how much the level moves compared with the reference. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
 
 **Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling and soft clip, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
 
@@ -127,7 +127,7 @@ Everything happens on the **Master** page, top to bottom:
 | Tame harsh highs | A gentle shelf cut above 11 kHz |
 | De-ess | Turns the band above 4.5 kHz down only while an "s" lasts |
 | Album match | Nudges the song's tone toward the album's average (album mode only) |
-| Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song |
+| Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song's tonal balance; with a reference, Glue and Stereo width are also set to match its density and width |
 | Keep bass centred | Mono below 120 Hz (when turned on); everything above keeps its width |
 | Stereo width | Mid/side width; bass and kick stay centred |
 | Glue | Bus compression: Smooth, Punchy (slower attack) or Three-band (bass, mids and highs each on their own) |
@@ -180,7 +180,8 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | `--glue` | Glue compression `0`-`100` (default `30`) |
 | `--glue-style` | `smooth` (default), `punchy` or `three-band` |
 | `--width` | Stereo width `0`-`150` (default `100`) |
-| `--reference` | A finished song to match tone and loudness to |
+| `--reference` | A finished song to match tone, density, width and loudness to |
+| `--match` | How closely to match the reference, `0`-`100` (default `80`) |
 | `--auto` | Use what Check suggests for each song (cleanup, de-ess, trim, fade) |
 | `--format` | `wav` (24-bit), `wav16`, `flac` or `mp3` |
 | `--out` | Folder for the mastered files |
@@ -235,7 +236,8 @@ wavmasta/
 │   ├── lowend.py        Keeping the bass centred, and checking mono compatibility
 │   ├── edges.py         Trimming silence, fade-outs, spotting sudden endings
 │   ├── album.py         Album mode: the set's shared tone and loudness
-│   ├── chain.py         Tone EQ, reference matching, width, glue styles, soft clip, loudness and true-peak limiter
+│   ├── chain.py         Tone EQ, width, glue styles, soft clip, loudness and true-peak limiter
+│   ├── reference.py     Matching a reference song: tone, density, width and loudness
 │   ├── audio.py         Reading and writing WAV, FLAC, MP3 (with dither for 16-bit)
 │   └── preview.py       Level-matched before/after clips, playback and waveform outlines
 └── gui/                 The window

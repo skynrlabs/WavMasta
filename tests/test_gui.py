@@ -178,7 +178,7 @@ def test_reference_disables_tone_and_loudness(app, monkeypatch, copies):
     card.pick_reference()
     assert page(app).tracks[0].reference == copies["hum"]
     assert "disabled" in card.tone_box.state()
-    assert "Hum Song.wav" in card.ref_text.get()
+    assert "Hum Song.wav" in card.ref_name.get()
     card.clear_reference()
     assert page(app).tracks[0].reference is None
     assert "disabled" not in card.tone_box.state()
@@ -601,6 +601,33 @@ def test_soft_clip_setting_is_saved_used_and_reset(app, monkeypatch, copies):
     assert "soft-clipped" in app.activity.as_text()
     app.reset_settings()
     assert sp.soft_clip() == "Auto"
+
+
+def test_reference_match_strength_and_report(app, monkeypatch, copies):
+    from tkinter import filedialog
+
+    add(app, monkeypatch, [copies["clean"]])
+    card, t = page(app).card, page(app).tracks[0]
+    app.root.update()
+    assert not card.match_slider.winfo_ismapped() and card.ref_hint.winfo_ismapped()
+    monkeypatch.setattr(filedialog, "askopenfilename", lambda **kw: copies["hum"])
+    card.pick_reference()
+    app.root.update()
+    assert card.match_slider.winfo_ismapped() and not card.ref_hint.winfo_ismapped()
+    assert card.match_text.get() == "80% · natural"
+    assert card.glue_text.get() == "from the reference" and card.width_text.get() == "from the reference"
+    assert card.glue_slider.cget("state") == "disabled" and card.width_slider.cget("state") == "disabled"
+    assert not card.glue_style_box.instate(["disabled"])  # the style is still yours to choose
+    card.match_var.set(100)
+    card._store()
+    assert t.match == 100 and card.match_text.get() == "100% · full match" and t.settings(-1).match == 100
+    app.masterer.start()
+    wait(app, 180)
+    text = app.activity.as_text()
+    assert "Reference | Hum Song.wav · 100%" in text and "Density & width | " in text and "level moves" in text
+    card.clear_reference()
+    app.root.update()
+    assert card.glue_slider.cget("state") == "normal" and not card.match_slider.winfo_ismapped()
 
 
 def test_check_suggests_fade_and_de_ess(app, monkeypatch, copies, tmp_path):

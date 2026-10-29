@@ -159,6 +159,7 @@ wavmasta "My Song.wav" --tone country --auto
 wavmasta *.wav --tone roots-rock --loudness -14 --glue 40 --out masters
 wavmasta "My Song.wav" --loudness -9 --glue-style three-band
 wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
+wavmasta "My Song.wav" --reference "Favourite Release.flac" --match 100
 wavmasta album/*.wav --album --fade-out 3 --out masters
 ```
 
@@ -195,6 +196,7 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 - Pick the glue style by ear: **Punchy** for songs built on live drums, **Three-band** when a big kick or bass makes the vocal dip, **Smooth** for everything else.
 - Go easy on noise reduction. 30-50% is usually enough; above about 70% it can sound watery. Always check with **After**.
 - Clipping in your mix can't be undone. If **Check** reports clipping, export the mix a few dB quieter.
+- Pick a reference in the same style as your song, mastered the way you want yours to sound. Start at the default **Match** of 80% and adjust by ear.
 - Upload **WAV 24-bit** to your distributor (DistroKid, CD Baby, TuneCore and others).
 
 ---
@@ -206,10 +208,12 @@ wavmasta album/*.wav --album --fade-out 3 --out masters
 | **"Windows protected your PC"** when installing | That's the itch.io installer, which isn't code-signed. Click **More info → Run anyway**, or install the signed version from the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). |
 | The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, lower **Glue** to 20-30%, or try the **Punchy** glue style. |
 | The vocal dips every time the kick or bass hits | Set the glue style to **Three-band**. |
+| Matching a reference barely changes anything | Raise **Match** towards 100%, and check **History**: the Reference rows show what it changed. If the reference is in a different style from your song, try one closer to it. |
+| Matching a reference goes too far | Lower **Match**. 60-80% keeps more of your own mix's character. |
 | Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
 | The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
 | Vocals sound lispy or dull after de-essing | Lower **De-ess**. 30-50% is usually enough. |
-| Album songs still sound different | Album mode matches overall tone and loudness, not arrangement. Check that one song isn't using a **Reference**: a reference decides that song's tone instead. |
+| Album songs still sound different | Album mode matches overall tone and loudness, not arrangement. Check that one song isn't using a **Reference**: a reference decides that song's tone, density and width instead. |
 | **Check** says parts of the song cancel out in mono | A track in the mix is out of phase (often a stereo widener or a flipped mic). Mastering can't fix it; check the mix, or try the song on a phone speaker to hear it. |
 | A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
 | **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |

@@ -38,7 +38,7 @@ body:
     id: version
     attributes:
       label: WavMasta version
-      placeholder: "1.4.0"
+      placeholder: "1.4.1"
     validations:
       required: true
   - type: textarea

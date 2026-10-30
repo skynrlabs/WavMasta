@@ -48,14 +48,14 @@ jobs:
             "::notice title=$($_.Name)::$([math]::Round($_.Length / 1MB, 1)) MB"
           }
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: WavMasta-Setup-${{ steps.ver.outputs.version }}
           path: dist/installer/*.exe
           retention-days: 1
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: WavMasta-Store-${{ steps.ver.outputs.version }}
           path: dist/msix/*.msix

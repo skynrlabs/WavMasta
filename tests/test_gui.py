@@ -867,14 +867,21 @@ def test_history_result_column_keeps_the_readings_whole(app, monkeypatch, copies
     assert shortened == [], (log._widths, tree.winfo_width())
 
 
-def test_support_links_go_to_github_sponsors(app, monkeypatch):
-    import webbrowser
+def test_no_support_or_donation_links_in_the_app(app):
+    """The app is sold on the Microsoft Store, so it doesn't ask for money anywhere."""
+    from wavmasta.gui.dialogs import show_about
 
-    opened = []
-    monkeypatch.setattr(webbrowser, "open", lambda url, *a, **k: opened.append(url))
-    app.nav.support.event_generate("<Button-1>")
-    app.root.update()
-    assert opened == ["https://github.com/sponsors/skynrlabs"]
+    about = show_about(app.root, app.fonts)
+    texts = []
+    stack = [app.root]
+    while stack:
+        w = stack.pop()
+        if "text" in w.keys():  # noqa: SIM118 (a Tk widget, not a dict)
+            texts.append(str(w.cget("text")))
+        stack.extend(w.winfo_children())
+    about.destroy()
+    assert not [t for t in texts if "Support" in t or "chipping" in t or "sponsor" in t.lower()]
+    assert not hasattr(app.nav, "support")
 
 
 def test_about_opens_the_open_source_licenses(app):

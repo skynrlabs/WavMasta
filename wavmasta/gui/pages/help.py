@@ -4,7 +4,7 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk
 
-from ...config import REPO_URL, SUPPORT_URL
+from ...config import REPO_URL
 from ..theme import THEME as T
 
 HELP_TEXT = [
@@ -189,4 +189,3 @@ class HelpPage(ttk.Frame):
             side="left", padx=8
         )
         ttk.Button(links, text="About", command=on_about).pack(side="left")
-        ttk.Button(links, text="Support WavMasta", command=lambda: webbrowser.open(SUPPORT_URL)).pack(side="right")

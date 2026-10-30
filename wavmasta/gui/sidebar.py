@@ -1,12 +1,10 @@
-"""Left-hand navigation: brand, one entry per page, Support link and version at the bottom.
+"""Left-hand navigation: brand, one entry per page and version at the bottom.
 The open page gets a violet-to-magenta marker, and a thin gradient edge separates the sidebar
 from the page."""
 
 import tkinter as tk
-import webbrowser
 
 from .. import __version__
-from ..config import SUPPORT_URL
 from .theme import THEME as T
 from .theme import GradientLine, px
 
@@ -44,16 +42,9 @@ class Sidebar(tk.Frame):
 
         foot = tk.Frame(body, bg=T["bar"])
         foot.pack(side="bottom", fill="x", padx=18, pady=16)
-        self.support = tk.Label(
-            foot, text="♥  Support WavMasta", bg=T["bar"], fg=T["accent2"], font=fonts["btn"], cursor="hand2"
-        )
-        self.support.pack(anchor="w", pady=(0, 6))
-        self.support.bind("<Button-1>", lambda e: webbrowser.open(SUPPORT_URL))
-        self.support.bind("<Enter>", lambda e: self.support.configure(fg=T["text"]))
-        self.support.bind("<Leave>", lambda e: self.support.configure(fg=T["accent2"]))
         tk.Label(
             foot,
-            text="Free and open source.\nIf it saves you time,\nconsider chipping in.",
+            text="Open source and private:\neverything runs on\nyour own computer.",
             bg=T["bar"],
             fg=T["muted"],
             font=fonts["small"],

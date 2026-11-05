@@ -254,9 +254,9 @@ WavMasta is proprietary software under the [WavMasta License](LICENSE). Copyrigh
 
 - **You can** install and use WavMasta on computers you own or control, whatever you paid for it.
 - **Your music is yours.** Masters you make with WavMasta are yours to use however you like, commercial releases included.
-- **You can't** share, publish or sell WavMasta, changed or not, without written permission. Point people to [itch.io](https://skynrlabs.itch.io/wavmasta) or the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) instead.
+- **You can't** share, sell or reverse-engineer WavMasta without written permission (except as the open-source libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/wavmasta) or the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) instead.
 
-Earlier versions released under the MIT License stay under it. See [LICENSE](LICENSE) for the full terms.
+Earlier versions released under the MIT License, and the source code once published under the earlier source-available WavMasta License, stay under those licenses. See [LICENSE](LICENSE) for the full terms.
 
 ### Third-party libraries
 

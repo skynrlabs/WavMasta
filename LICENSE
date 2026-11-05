@@ -2,76 +2,87 @@ WavMasta License
 
 Copyright (c) 2026 Skynr Labs. All rights reserved.
 
-This license covers the WavMasta source code in this repository and the
-WavMasta app, for every version released after 1.4.2, except the 1.5.0
-source code described below.
+WavMasta is proprietary software owned by Skynr Labs. This license covers the
+WavMasta app, for every version released after 5 November 2026, on every
+platform. By installing or using WavMasta you agree to it. If you don't agree,
+don't install or use WavMasta.
 
 WavMasta 1.4.2 and earlier were released under the MIT License (their Windows
 app builds were distributed under the GPL v3, because they included a GPL
-library). The WavMasta 1.5.0 source code as published in this repository up
-to commit a76eb95 (2 November 2026), before this license replaced the MIT
-License, was also released under the MIT License. Copies of those versions
-stay under those licenses, and nothing here changes that.
+library). The WavMasta 1.5.0 source code that was published on GitHub up to
+commit a76eb95 (2 November 2026) was also released under the MIT License.
+Between that commit and 5 November 2026, the published source code was
+available under an earlier version of this license. Copies of those versions
+stay under the licenses they were released with, and nothing here changes
+that.
 
 
 1. WHAT YOU MAY DO
 
-   a. Use the app. If you bought WavMasta (on itch.io or the Microsoft Store)
-      or built it yourself from this source code, you may install and use it
-      on computers you own or control.
+   a. Use the app. Skynr Labs gives you a personal, non-exclusive,
+      non-transferable license to install and use WavMasta on computers you own
+      or control, for personal or commercial work. This applies however you
+      got WavMasta from Skynr Labs (itch.io, the Microsoft Store or anywhere else
+      Skynr Labs offers it) and whatever you paid for it, including nothing.
 
-   b. Build it yourself. You may download the source code, compile it and
-      change it, for your own personal use.
-
-   c. Contribute. You may send changes to Skynr Labs as an issue, a pull
-      request or a patch (see section 4).
-
-   d. Keep what you make. Masters and anything else you create with WavMasta
+   b. Keep what you make. Masters and anything else you create with WavMasta
       belong to you. You may use them however you like, including in
-      commercial releases.
+      commercial releases. You are responsible for having the rights to the audio you
+      put into WavMasta.
 
 
 2. WHAT YOU MAY NOT DO
 
-   Unless Skynr Labs gives you permission in writing, you may not:
+   Unless Skynr Labs gives you permission in writing, or the law expressly
+   allows it, you may not:
 
-   a. share, publish, sell, rent, sublicense or otherwise distribute
-      WavMasta or any part of its source code, changed or unchanged, as
-      source code or as a compiled app;
+   a. copy, share, publish, sell, rent, lend, sublicense or otherwise
+      distribute WavMasta, changed or unchanged. Point people to where Skynr Labs
+      offers it instead;
 
-   b. remove or change any copyright or license notice; or
+   b. modify, decompile, disassemble or reverse-engineer WavMasta, except as
+      section 3 allows;
 
-   c. use the names "WavMasta" or "Skynr Labs", or the WavMasta logo, to
-      promote anything made from this code.
+   c. remove or change any copyright or license notice; or
 
-   Forking this repository on GitHub, as GitHub's Terms of Service allow,
-   is fine, but a fork does not give you any rights beyond this license.
+   d. use the names "WavMasta" or "Skynr Labs", or the WavMasta logo, to promote
+      anything that isn't made by Skynr Labs.
 
 
-3. OTHER PEOPLE'S CODE
+3. OTHER PEOPLE'S SOFTWARE
 
-   WavMasta includes open-source libraries made by others. Each one stays
-   under its own license, listed in THIRD_PARTY_LICENSES.txt. Nothing in this
-   license limits the rights those licenses give you.
+   WavMasta includes open-source libraries made by others. Each one stays under
+   its own license, listed in THIRD_PARTY_LICENSES.txt and in the app under
+   Help > About > Open-source licenses. Nothing in this license limits the
+   rights those licenses give you. In particular, where a library's license
+   (such as the GNU LGPL) lets you change or replace that library, you may do
+   so, and reverse-engineer WavMasta only as far as is needed to do that and to
+   debug the result.
 
 
 4. CONTRIBUTIONS
 
-   If you send a contribution (code, documentation, tests or anything else),
-   you confirm that you have the right to send it, and you give Skynr Labs a
+   If you send Skynr Labs a suggestion, a fix or anything else for WavMasta, you
+   confirm that you have the right to send it, and you give Skynr Labs a
    permanent, worldwide, royalty-free and irrevocable license to use, copy,
-   change, distribute and sublicense it, under any terms, as part of
-   WavMasta or otherwise.
+   change, distribute and sublicense it, under any terms, as part of WavMasta
+   or otherwise.
 
 
-5. NO WARRANTY
+5. UPDATES
+
+   Skynr Labs may provide updates. This license applies to them unless they
+   come with a different license.
+
+
+6. NO WARRANTY
 
    WAVMASTA IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 
-6. LIMITATION OF LIABILITY
+7. LIMITATION OF LIABILITY
 
    IN NO EVENT SHALL SKYNR LABS OR ITS CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
@@ -79,13 +90,13 @@ stay under those licenses, and nothing here changes that.
    OF OR OTHER DEALINGS IN WAVMASTA, TO THE FULLEST EXTENT THE LAW ALLOWS.
 
 
-7. ENDING THIS LICENSE
+8. ENDING THIS LICENSE
 
-   If you break this license, your rights under it end automatically.
-   Sections 1d, 3, 5, 6 and 8 still apply after that.
+   If you break this license, your rights under it end automatically and you
+   must uninstall WavMasta. Sections 1b, 3, 6, 7 and 9 still apply after that.
 
 
-8. GOVERNING LAW
+9. GOVERNING LAW
 
    This license is governed by the laws of the Province of Ontario and the
    federal laws of Canada that apply there.

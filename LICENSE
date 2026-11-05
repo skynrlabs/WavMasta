@@ -1,0 +1,91 @@
+WavMasta License
+
+Copyright (c) 2026 Skynr Labs. All rights reserved.
+
+This license covers the WavMasta source code in this repository and the
+WavMasta app, for every version released after 1.4.2, except the 1.5.0
+source code described below.
+
+WavMasta 1.4.2 and earlier were released under the MIT License (their Windows
+app builds were distributed under the GPL v3, because they included a GPL
+library). The WavMasta 1.5.0 source code as published in this repository up
+to commit a76eb95 (2 November 2026), before this license replaced the MIT
+License, was also released under the MIT License. Copies of those versions
+stay under those licenses, and nothing here changes that.
+
+
+1. WHAT YOU MAY DO
+
+   a. Use the app. If you bought WavMasta (on itch.io or the Microsoft Store)
+      or built it yourself from this source code, you may install and use it
+      on computers you own or control.
+
+   b. Build it yourself. You may download the source code, compile it and
+      change it, for your own personal use.
+
+   c. Contribute. You may send changes to Skynr Labs as an issue, a pull
+      request or a patch (see section 4).
+
+   d. Keep what you make. Masters and anything else you create with WavMasta
+      belong to you. You may use them however you like, including in
+      commercial releases.
+
+
+2. WHAT YOU MAY NOT DO
+
+   Unless Skynr Labs gives you permission in writing, you may not:
+
+   a. share, publish, sell, rent, sublicense or otherwise distribute
+      WavMasta or any part of its source code, changed or unchanged, as
+      source code or as a compiled app;
+
+   b. remove or change any copyright or license notice; or
+
+   c. use the names "WavMasta" or "Skynr Labs", or the WavMasta logo, to
+      promote anything made from this code.
+
+   Forking this repository on GitHub, as GitHub's Terms of Service allow,
+   is fine, but a fork does not give you any rights beyond this license.
+
+
+3. OTHER PEOPLE'S CODE
+
+   WavMasta includes open-source libraries made by others. Each one stays
+   under its own license, listed in THIRD_PARTY_LICENSES.txt. Nothing in this
+   license limits the rights those licenses give you.
+
+
+4. CONTRIBUTIONS
+
+   If you send a contribution (code, documentation, tests or anything else),
+   you confirm that you have the right to send it, and you give Skynr Labs a
+   permanent, worldwide, royalty-free and irrevocable license to use, copy,
+   change, distribute and sublicense it, under any terms, as part of
+   WavMasta or otherwise.
+
+
+5. NO WARRANTY
+
+   WAVMASTA IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+
+6. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL SKYNR LABS OR ITS CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH WAVMASTA OR THE USE
+   OF OR OTHER DEALINGS IN WAVMASTA, TO THE FULLEST EXTENT THE LAW ALLOWS.
+
+
+7. ENDING THIS LICENSE
+
+   If you break this license, your rights under it end automatically.
+   Sections 1d, 3, 5, 6 and 8 still apply after that.
+
+
+8. GOVERNING LAW
+
+   This license is governed by the laws of the Province of Ontario and the
+   federal laws of Canada that apply there.

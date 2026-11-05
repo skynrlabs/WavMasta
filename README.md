@@ -1,0 +1,269 @@
+# <img src="docs/icon-64.png" alt="" width="48" align="center"> WavMasta
+
+[![License](https://img.shields.io/badge/license-WavMasta_License-blue?style=flat-square)](LICENSE)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
+[![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
+[![Discord](https://img.shields.io/badge/Discord-Skynr_Labs-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/25mPUWUAa)
+
+> Clean up and master your songs, ready for release.  
+> Hiss, hum and harsh highs out. Streaming-ready loudness in.
+
+<p>
+  <a href="https://apps.microsoft.com/detail/9NBM4FQGLK8V"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
+</p>
+
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/wavmasta) and pay what you want (Windows and Mac), or grab the Linux app from [Releases](https://github.com/skynrlabs/WavMasta/releases/latest).
+
+![WavMasta screenshot](docs/screenshot.png)
+
+---
+
+## What Is WavMasta?
+
+WavMasta is a desktop tool that takes your finished mix and makes it release-ready. It checks the song for problems (steady hiss, mains hum, a whine, fizzy top end, sharp "s" sounds, bass spread too wide), cleans them up, gives it a gentle tone shape and glue, and brings it to the right loudness for Spotify, Apple Music and YouTube with peaks kept safely under the ceiling.
+
+Press **Before** and **After** on any song to hear the difference at equal loudness, then **Master** to save `<song> - master.wav` next to the original. Your original is never changed.
+
+---
+
+## 💬 Why WavMasta?
+
+Getting a mix to sound finished usually means a chain of plugins, a loudness meter and a lot of guessing. Online mastering services work, but they cost money per song and you can't see what they did.
+
+WavMasta does the standard mastering steps in one window, tells you in plain English what it found and what it changed, and lets you hear the result fairly before you save anything.
+
+---
+
+## ✨ Features
+
+- 🔍 **Check this song**: measures loudness and true peak, and finds hiss, hum, whine, harsh highs, sharp "s" sounds, wide bass, parts that cancel in mono and clipping, with a suggested fix for each
+- 🧹 **Noise reduction**: a gentle de-hisser that works where hiss lives (above 1 kHz) and never touches the bass or the body of the mix
+- 🔌 **Hum and whine removal**: finds tones that sit there the whole song (50/60 Hz hum, a whine, ringing) and notches them out with very narrow filters, while the notes in your music are left alone
+- ✨ **Tame harsh highs**: softens fizzy, brittle top end, common in AI-generated songs; **Check** works out how many dB your song needs
+- 🐍 **De-esser**: turns down sharp "s" and "t" sounds in the vocal, only while each one lasts and only above 4.5 kHz; **Check** suggests an amount when it hears them
+- ✂️ **Trim and fade**: cuts dead air off both ends (without clicks) and fades the ending smoothly; **Check** spots songs that stop suddenly
+- 🔈 **Keep bass centred**: folds the bass below 120 Hz to mono so it holds up on phones and small speakers; **Check** suggests it when the bass is spread wide, and warns when parts of a song cancel out in mono
+- 🎚️ **Tone presets**: Neutral, Country, Roots rock, Pop, Warm, Bright, all gentle (within 2 dB)
+- 🎯 **Match a reference**: pick a released song you love and WavMasta matches its tonal balance, density, stereo width and loudness, as closely as you choose, and History shows exactly what it changed
+- 🧲 **Glue and width**: bus compression to hold the mix together (Smooth, Punchy, or Three-band so a loud kick doesn't duck the vocal), and stereo width that keeps bass and kick centred
+- 📏 **Loudness targets**: Streaming (-14 LUFS), Apple Music (-16), Loud (-11), Very loud (-9), with a look-ahead true-peak limiter that never clips
+- 🔊 **Soft clip**: on loud masters, the sharpest peaks are rounded off smoothly before the limiter, so the mix doesn't pump and still lands on target (Auto, Always or Off in Settings)
+- ▶️ **Fair before/after**: hear the loudest 20 seconds of the original and the master at the same loudness, right from the sound card, after every change
+- 〰️ **Waveform before and after**: the master drawn over the original, with the ceiling and the stretch you heard, so you can see what changed
+- 💾 **Formats**: WAV 24-bit (for distributors), WAV 16-bit with dither (CD), FLAC, MP3 320
+- 📦 **Batch and albums**: drop a whole folder; **Apply to all songs** copies one sound to the rest
+- 💿 **Album mode**: listens to the whole set, matches the songs' tone to the album's average and masters them all to the same loudness, so the record plays as one
+- 📋 **A report for every master**: History shows each song's clipping, true peak, loudness, punch, what cleanup removed (hiss, hum and whine, harsh highs, sharp "s" sounds), what was trimmed and how it ends
+- ✅ **Always know where you stand**: each song shows when it's saved, and says *changed · master again* if you tweak it afterwards
+- 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
+- 💻 **GUI and command line**: point and click, or script it
+
+---
+
+## 📥 Install
+
+### Windows: Microsoft Store (recommended)
+
+1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and buy it ($4.99 USD, or the local price where you are).
+2. Open **WavMasta** from the Start menu.
+
+The Store version is signed by Microsoft, so there's no security warning, and it **updates itself** automatically. Every update is free. To remove it, use **Settings → Apps → WavMasta → Uninstall**.
+
+### Windows: installer from itch.io
+
+1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want; $4.99 USD suggested).
+2. Run it and click through the installer. No Python or admin rights needed.
+3. Open **WavMasta** from the Start menu (or the desktop shortcut, if you ticked it).
+
+> Windows may show **"Windows protected your PC"** because this installer isn't code-signed. Click **More info → Run anyway**, or get the signed version from the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V).
+
+To update, run the newer installer. To remove, use **Settings → Apps → WavMasta → Uninstall**. Use one version or the other, not both.
+
+### Mac: app from itch.io
+
+1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want; $4.99 USD suggested). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
+2. Open the zip and drag **WavMasta** into your **Applications** folder. No Python needed.
+3. Open **WavMasta** from Applications.
+
+The Mac app is signed and notarized by Apple, so it opens without a security warning. It needs macOS 14 (Sonoma) or newer. To update, replace the old WavMasta in Applications with the new one; your settings are kept.
+
+### Linux
+
+1. Download **`WavMasta-x.y.z-linux-x86_64.tar.gz`** from [Releases](https://github.com/skynrlabs/WavMasta/releases/latest) (free), or from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want).
+2. Unpack it and run **`./install.sh`** inside the folder. No sudo or Python needed: it installs into your home folder and adds **WavMasta** to your app menu, plus a `wavmasta` command.
+3. Open **WavMasta** from your app menu, or run `wavmasta`.
+
+Works on most 64-bit desktop distributions from 2022 onwards (Ubuntu 22.04, Debian 12, Fedora 36, Mint 21 and newer). To update, unpack the new version and run `./install.sh` again; your settings are kept. To remove it, run `~/.local/share/wavmasta/install.sh --uninstall`.
+
+---
+
+## ⚙️ How It Works
+
+Everything happens on the **Master** page, top to bottom:
+
+1. **Drop your songs** (or a whole folder) onto the window, or click **Add songs...** (WAV, FLAC, MP3, AIFF or OGG). Use your final mix, ideally peaking around -3 to -6 dB with no limiter on the master bus.
+2. **Click a song**, then **Check this song**. WavMasta lists what it found; **Use suggestions** sets the cleanup for you.
+3. Pick a **Tone** and **Loudness** (or choose a **Reference** song to match, and how closely with **Match**), how much **Glue** and its style (**Smooth**, **Punchy** or **Three-band**), and a **Fade-out** if the song stops suddenly. **Apply to all songs** copies the sound to the rest; tick **Album mode** to also match their tone and loudness as a set.
+4. Press **After** to hear the master and **Before** to hear the original, both from the loudest part of the song at the same loudness. They're under **Hear** at the bottom of the sound card, right below the settings, so you can tweak, listen and tweak again; the song you're hearing says *▶ playing after* in the list. Change a setting and the card tells you to press **After** again. The button turns into **Stop** while it plays, and the sound settings lock until you stop, so what you hear always matches what they show. The **Waveform** card draws the master over the original.
+5. Click **Master** (it says how many songs). Each row shows when its file is saved, and says **changed · master again** if you change a setting afterwards.
+
+**History** lists everything Check, Before/After and Master did. Under each mastered song is a short report: clipping, true peak, loudness, punch, whether the peaks were soft-clipped, what cleanup removed, trimming, the ending, the bass, and the tone and glue used. A song matched to a reference shows what the match changed: the EQ moves, the glue and width it chose, and how much the level moves compared with the reference. An album master adds how closely the songs' loudness now matches. Double-click a saved song to open its folder.
+
+**Settings** holds where masters are saved (next to each song by default), the file format, the peak ceiling and soft clip, whether the folder opens when mastering finishes, and **Reset everything to defaults**.
+
+### The chain
+
+| Step | What it does |
+|---|---|
+| Trim | Cuts silence off both ends, keeping a short breath before the first note |
+| Rumble filter | Removes sub-bass below 25 Hz you can't hear but that eats loudness |
+| Hum and whine | Very narrow notches on steady tones (found on the untouched audio first) |
+| Noise reduction | De-hisses above 1 kHz, only what sits near the noise floor |
+| Tame harsh highs | A gentle shelf cut above 11 kHz |
+| De-ess | Turns the band above 4.5 kHz down only while an "s" lasts |
+| Album match | Nudges the song's tone toward the album's average (album mode only) |
+| Tone or reference | A gentle EQ shape, or a linear-phase match to your reference song's tonal balance; with a reference, Glue and Stereo width are also set to match its density and width |
+| Keep bass centred | Mono below 120 Hz (when turned on); everything above keeps its width |
+| Stereo width | Mid/side width; bass and kick stay centred |
+| Glue | Bus compression: Smooth, Punchy (slower attack) or Three-band (bass, mids and highs each on their own) |
+| Fade-out | Smooth fade to silence (before loudness, so the song still lands on target) |
+| Loudness and limiter | Lands on the target LUFS with a look-ahead true-peak limiter; never clips. For masters louder than -14 LUFS an oversampled soft clipper rounds off the sharpest peaks first, so the limiter pumps less (Settings: Auto, Always or Off) |
+
+### ⌨️ Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| `Ctrl+O` | Add songs |
+| `Ctrl+I` | Check the selected song |
+| `Ctrl+B` | Hear before |
+| `Ctrl+P` | Hear after |
+| `Esc` | Stop playback |
+| `Ctrl+Enter` | Master |
+| `Ctrl+1` to `Ctrl+4` | Master, History, Settings, Help pages |
+| `F1` | Help |
+
+---
+
+## 💻 Command Line
+
+For batch jobs and scripts. The command line comes with the Linux app: run `wavmasta` with file names.
+
+```bash
+wavmasta "My Song.wav" --check
+wavmasta "My Song.wav" --tone country --auto
+wavmasta *.wav --tone roots-rock --loudness -14 --glue 40 --out masters
+wavmasta "My Song.wav" --loudness -9 --glue-style three-band
+wavmasta "My Song.wav" --reference "Favourite Release.flac" --format flac
+wavmasta "My Song.wav" --reference "Favourite Release.flac" --match 100
+wavmasta album/*.wav --album --fade-out 3 --out masters
+```
+
+| Option | What it does |
+|---|---|
+| `--check` | Only measure and report problems; save nothing |
+| `--tone` | `neutral`, `country`, `roots-rock`, `pop`, `warm` or `bright` |
+| `--loudness` | Target in LUFS (default `-14`) |
+| `--ceiling` | True-peak ceiling in dBTP (default `-1`) |
+| `--soft-clip` | `auto` (default: only louder than -14 LUFS), `always` or `off` |
+| `--denoise` | Noise reduction `0`-`100` (default `0`) |
+| `--no-hum-fix` | Don't notch out steady hum and whine |
+| `--tame-highs` | Cut harsh highs, `0`-`6` dB |
+| `--deess` | Tame sharp "s" sounds, `0`-`100` (default `0`) |
+| `--fade-out` | Fade the ending over this many seconds, `0`-`10` |
+| `--no-trim` | Keep silence at the start and end |
+| `--mono-bass` | Keep the bass centred: mono below 120 Hz |
+| `--album` | Master all the songs as one album: matched tone and loudness |
+| `--glue` | Glue compression `0`-`100` (default `30`) |
+| `--glue-style` | `smooth` (default), `punchy` or `three-band` |
+| `--width` | Stereo width `0`-`150` (default `100`) |
+| `--reference` | A finished song to match tone, density, width and loudness to |
+| `--match` | How closely to match the reference, `0`-`100` (default `80`) |
+| `--auto` | Use what Check suggests for each song (cleanup, de-ess, trim, fade) |
+| `--format` | `wav` (24-bit), `wav16`, `flac` or `mp3` |
+| `--out` | Folder for the mastered files |
+
+---
+
+## 💡 Tips
+
+- Mastering polishes a good mix; it can't fix a bad one. If the vocal is buried or the bass is boomy, fix it in the mix first.
+- Louder isn't better on streaming. Spotify and YouTube turn songs down to about -14 LUFS, so a -9 master just ends up sounding flatter. If you do want it loud, leave **Soft clip** on Auto so it keeps its punch.
+- Pick the glue style by ear: **Punchy** for songs built on live drums, **Three-band** when a big kick or bass makes the vocal dip, **Smooth** for everything else.
+- Go easy on noise reduction. 30-50% is usually enough; above about 70% it can sound watery. Always check with **After**.
+- Clipping in your mix can't be undone. If **Check** reports clipping, export the mix a few dB quieter.
+- Pick a reference in the same style as your song, mastered the way you want yours to sound. Start at the default **Match** of 80% and adjust by ear.
+- Upload **WAV 24-bit** to your distributor (DistroKid, CD Baby, TuneCore and others).
+
+---
+
+## 🩺 Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| **"Windows protected your PC"** when installing | That's the itch.io installer, which isn't code-signed. Click **More info → Run anyway**, or install the signed version from the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). |
+| The Mac app won't open | Make sure you dragged it into **Applications** first and are on macOS 14 or newer. If it still won't start, [open an issue](https://github.com/skynrlabs/WavMasta/issues) and say which Mac and macOS version you have. |
+| Not sure which Mac download you need | **Apple menu → About This Mac**: Apple M1, M2, M3 or newer is **Apple Silicon**; otherwise it's **Intel**. |
+| The Linux app won't start | Run `wavmasta` in a terminal to see the error, and send it in [an issue](https://github.com/skynrlabs/WavMasta/issues). Very old distributions (before 2022) aren't supported. |
+| The master sounds squashed or lifeless | Use **Streaming (-14 LUFS)** instead of Loud or Very loud, lower **Glue** to 20-30%, or try the **Punchy** glue style. |
+| The vocal dips every time the kick or bass hits | Set the glue style to **Three-band**. |
+| Matching a reference barely changes anything | Raise **Match** towards 100%, and check **History**: the Reference rows show what it changed. If the reference is in a different style from your song, try one closer to it. |
+| Matching a reference goes too far | Lower **Match**. 60-80% keeps more of your own mix's character. |
+| Watery, swirly or "underwater" sound | Lower **Noise reduction**. 30-50% is usually plenty. |
+| The highs sound dull | Lower **Tame harsh highs** and **Noise reduction**, or try the **Bright** tone. |
+| Vocals sound lispy or dull after de-essing | Lower **De-ess**. 30-50% is usually enough. |
+| Album songs still sound different | Album mode matches overall tone and loudness, not arrangement. Check that one song isn't using a **Reference**: a reference decides that song's tone, density and width instead. |
+| **Check** says parts of the song cancel out in mono | A track in the mix is out of phase (often a stereo widener or a flipped mic). Mastering can't fix it; check the mix, or try the song on a phone speaker to hear it. |
+| A hum or buzz is still there | Hum removal only catches tones that stay steady the whole song. A buzz that comes and goes, or changes pitch, needs fixing in the mix. |
+| **Check** reports clipping | The mix itself is clipped and mastering can't undo it. Export the mix a few dB quieter and master that. |
+| Crackles or distortion after uploading | Set **Peak ceiling** to -2.0 on the **Settings** page and master again. |
+| My song sounds quieter than others on Spotify | That's normalisation: Spotify plays everything at about the same loudness. A -14 LUFS master loses nothing. |
+| No sound when pressing Before or After | Check your output device and volume. If it can't play, the status card shows where the preview file was saved. |
+
+Still stuck? [Open an issue](https://github.com/skynrlabs/WavMasta/issues) with your settings and, if you can share it, a short clip of the song.
+
+---
+
+## 🔐 Privacy
+
+WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. Besides your masters, the only file it writes is a small `settings.json` that remembers your format, peak ceiling, soft clip and whether to open the folder when done, stored in `%APPDATA%\WavMasta` on Windows, `~/Library/Application Support/WavMasta` on macOS or `~/.config/wavmasta` on Linux. Before/After previews go in a private folder inside your system temp folder, removed when WavMasta closes.
+
+---
+
+## 💜 Support WavMasta
+
+WavMasta is made by one person. If it saves you time, you can buy it for $4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) or pay what you want on [itch.io](https://skynrlabs.itch.io/wavmasta), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
+
+---
+
+## 🐞 Bugs and ideas
+
+Found a bug, a sound problem, or have an idea? [Open an issue](https://github.com/skynrlabs/WavMasta/issues/new/choose). This repo is where WavMasta is released and supported; the source code itself is private.
+
+## 🔒 Security
+
+See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
+
+## 💬 Community
+
+Join the [Skynr Labs Discord](https://discord.gg/25mPUWUAa) to ask questions, report bugs, share what you've made and hear about new releases. It's one server for all the Skynr Labs apps: Hearthloop, WavMasta, Stemquill and SemaBuzz.
+
+## 📄 License
+
+WavMasta is proprietary software under the [WavMasta License](LICENSE). Copyright © 2026 Skynr Labs.
+
+- **You can** install and use WavMasta on computers you own or control, whatever you paid for it.
+- **Your music is yours.** Masters you make with WavMasta are yours to use however you like, commercial releases included.
+- **You can't** share, publish or sell WavMasta, changed or not, without written permission. Point people to [itch.io](https://skynrlabs.itch.io/wavmasta), the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) or this repo's [Releases](https://github.com/skynrlabs/WavMasta/releases) instead.
+
+Earlier versions released under the MIT License stay under it. See [LICENSE](LICENSE) for the full terms.
+
+### Third-party libraries
+
+WavMasta is built on [NumPy](https://numpy.org), [SciPy](https://scipy.org), [Numba](https://numba.pydata.org) and [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT).
+
+The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Open-source licenses**.
+
+---
+
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/wavmasta) &nbsp;·&nbsp; [Releases](https://github.com/skynrlabs/WavMasta/releases) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)

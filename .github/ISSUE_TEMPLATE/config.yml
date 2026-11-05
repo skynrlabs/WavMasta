@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or help using WavMasta
+    url: https://discord.gg/25mPUWUAa
+    about: Ask in the Skynr Labs Discord. Issues are for bugs, sound problems and feature requests.
+  - name: Report a security vulnerability
+    url: https://github.com/skynrlabs/WavMasta/security/advisories/new
+    about: Report it privately, not in a public issue. See SECURITY.md.

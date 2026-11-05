@@ -254,7 +254,7 @@ WavMasta is proprietary software under the [WavMasta License](LICENSE). Copyrigh
 
 - **You can** install and use WavMasta on computers you own or control, whatever you paid for it.
 - **Your music is yours.** Masters you make with WavMasta are yours to use however you like, commercial releases included.
-- **You can't** share, sell or reverse-engineer WavMasta without written permission (except as the open-source libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/wavmasta) or the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) instead.
+- **You can't** share, sell or reverse-engineer WavMasta without written permission (except as the third-party libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/wavmasta) or the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) instead.
 
 Earlier versions released under the MIT License, and the source code once published under the earlier source-available WavMasta License, stay under those licenses. See [LICENSE](LICENSE) for the full terms.
 
@@ -262,7 +262,7 @@ Earlier versions released under the MIT License, and the source code once publis
 
 WavMasta is built on [NumPy](https://numpy.org), [SciPy](https://scipy.org), [Numba](https://numba.pydata.org) and [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT).
 
-The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Open-source licenses**.
+The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Third-party licenses**.
 
 ---
 

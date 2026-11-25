@@ -4,7 +4,6 @@
 [![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
-[![Discord](https://img.shields.io/badge/Discord-Skynr_Labs-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/25mPUWUAa)
 
 > Clean up and master your songs, ready for release.  
 > Hiss, hum and harsh highs out. Streaming-ready loudness in.
@@ -244,9 +243,9 @@ Found a bug, a sound problem, or have an idea? [Open an issue](https://github.co
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 
-## 💬 Community
+## 💬 Help
 
-Join the [Skynr Labs Discord](https://discord.gg/25mPUWUAa) to ask questions, report bugs, share what you've made and hear about new releases. It's one server for all the Skynr Labs apps: Hearthloop, WavMasta, Stemquill and SemaBuzz.
+Questions about using it? Email [support@skynrlabs.com](mailto:support@skynrlabs.com).
 
 ## 📄 License
 

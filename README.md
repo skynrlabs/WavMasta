@@ -1,8 +1,9 @@
 # <img src="docs/icon-64.png" alt="" width="48" align="center"> WavMasta
 
 [![License](https://img.shields.io/badge/license-WavMasta_License-blue?style=flat-square)](LICENSE)
-[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
-[![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%2411.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9NBM4FQGLK8V)
+[![itch.io](https://img.shields.io/badge/itch.io-%2411.99-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/wavmasta)
+[![Free demo](https://img.shields.io/badge/free_demo-Windows_%7C_Mac_%7C_Linux-2EA44F?style=flat-square)](https://skynrlabs.itch.io/wavmasta)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 
 > Clean up and master your songs, ready for release.  
@@ -12,7 +13,9 @@
   <a href="https://apps.microsoft.com/detail/9NBM4FQGLK8V"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-$4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/wavmasta) and pay what you want (Windows, Mac and Linux).
+$11.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V): signed by Microsoft, installs in one click and updates itself. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/wavmasta) (Windows, Mac and Linux), also $11.99.
+
+🎧 **Try it free first.** The free demo is on [itch.io](https://skynrlabs.itch.io/wavmasta) for Windows, Mac and Linux, and as the free trial on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V). Check, cleanup, tone, loudness and Before/After all work in full. Saved masters have a soft chime every 30 seconds, it masters up to 3 songs at a time, and reference matching, album mode and the command line are in the full version.
 
 ![WavMasta screenshot](docs/screenshot.png)
 
@@ -64,14 +67,14 @@ WavMasta does the standard mastering steps in one window, tells you in plain Eng
 
 ### Windows: Microsoft Store (recommended)
 
-1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and buy it ($4.99 USD, or the local price where you are).
+1. Open **[WavMasta on the Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V)** and buy it ($11.99 USD, or the local price where you are), or choose **Free trial** to try the demo first. Buying later unlocks it after a restart, with no reinstall.
 2. Open **WavMasta** from the Start menu.
 
 The Store version is signed by Microsoft, so there's no security warning, and it **updates itself** automatically. Every update is free. To remove it, use **Settings → Apps → WavMasta → Uninstall**.
 
 ### Windows: installer from itch.io
 
-1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want; $4.99 USD suggested).
+1. Download **`WavMasta-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/wavmasta) ($11.99 USD; the free **WavMasta Demo** download is there too).
 2. Run it and click through the installer. No Python or admin rights needed.
 3. Open **WavMasta** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -81,7 +84,7 @@ To update, run the newer installer. To remove, use **Settings → Apps → WavMa
 
 ### Mac: app from itch.io
 
-1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want; $4.99 USD suggested). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
+1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/wavmasta) ($11.99 USD; the free **WavMasta Demo** download is there too). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
 2. Open the zip and drag **WavMasta** into your **Applications** folder. No Python needed.
 3. Open **WavMasta** from Applications.
 
@@ -89,7 +92,7 @@ The Mac app is signed and notarized by Apple, so it opens without a security war
 
 ### Linux: app from itch.io
 
-1. Download **`WavMasta-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/wavmasta) (pay what you want; $4.99 USD suggested).
+1. Download **`WavMasta-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/wavmasta) ($11.99 USD; the free **WavMasta Demo** download is there too).
 2. Unpack it and run **`./install.sh`** inside the folder. No sudo or Python needed: it installs into your home folder and adds **WavMasta** to your app menu, plus a `wavmasta` command.
 3. Open **WavMasta** from your app menu, or run `wavmasta`.
 
@@ -231,7 +234,7 @@ WavMasta runs entirely on your computer. Your audio is never uploaded anywhere. 
 
 ## 💜 Support WavMasta
 
-WavMasta is made by one person. If it saves you time, you can buy it for $4.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) or pay what you want on [itch.io](https://skynrlabs.itch.io/wavmasta), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
+WavMasta is made by one person. If it saves you time, you can buy it for $11.99 on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V) or on [itch.io](https://skynrlabs.itch.io/wavmasta), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/detail/9NBM4FQGLK8V), starring the repo, and sharing it with other musicians all help too.
 
 ---
 
